@@ -56,10 +56,9 @@ struct ModelSettings
   bool recompileLibrariesCppAd = true;
   std::string modelFolderCppAd = "/tmp/ocs2";
 
-  std::vector<std::string> jointNames{ "leg_l1_joint", "leg_l2_joint", "leg_l3_joint", "leg_l4_joint", "leg_l5_joint",
-                                       "leg_r1_joint", "leg_r2_joint", "leg_r3_joint", "leg_r4_joint", "leg_r5_joint" };
+  std::vector<std::string> jointNames{ };
   std::vector<std::string> contactNames6DoF{};
-  std::vector<std::string> contactNames3DoF{ "leg_l_f1_link", "leg_r_f1_link", "leg_l_f2_link", "leg_r_f2_link" };
+  std::vector<std::string> contactNames3DoF{};
 };
 
 ModelSettings loadModelSettings(const std::string& filename, const std::string& fieldName = "model_settings",

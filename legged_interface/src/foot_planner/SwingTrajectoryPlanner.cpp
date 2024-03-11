@@ -72,12 +72,17 @@ SwingTrajectoryPlanner::SwingTrajectoryPlanner(Config config)
   , latestStanceposition_{}
 {
   numFeet_ = feet_bias_.size();
-
-  feet_bias_[0] << config.feet_bias_x1, config.feet_bias_y, config.feet_bias_z;
-  feet_bias_[1] << config.feet_bias_x1, -config.feet_bias_y, config.feet_bias_z;
-  feet_bias_[2] << config.feet_bias_x2, config.feet_bias_y, config.feet_bias_z;
-  feet_bias_[3] << config.feet_bias_x2, -config.feet_bias_y, config.feet_bias_z;
-
+  if(config.forwardx > 0.0){
+    feet_bias_[0] << config.feet_bias_l1, config.feet_bias_w, config.feet_bias_h;
+    feet_bias_[1] << config.feet_bias_l1, -config.feet_bias_w, config.feet_bias_h;
+    feet_bias_[2] << config.feet_bias_l2, config.feet_bias_w, config.feet_bias_h;
+    feet_bias_[3] << config.feet_bias_l2, -config.feet_bias_w, config.feet_bias_h;
+  }else{
+    feet_bias_[0] << config.feet_bias_w, config.feet_bias_l1, config.feet_bias_h;
+    feet_bias_[1] << -config.feet_bias_w, config.feet_bias_l1, config.feet_bias_h;
+    feet_bias_[2] << config.feet_bias_w, config.feet_bias_l2, config.feet_bias_h;
+    feet_bias_[3] << -config.feet_bias_w, config.feet_bias_l2, config.feet_bias_h;
+  }
   body_vel_cmd_.resize(6);
   body_vel_cmd_.setZero();
 
@@ -191,7 +196,6 @@ void SwingTrajectoryPlanner::update(const ModeSchedule& modeSchedule, const Targ
   {
     std::tie(startTimesIndices[leg], finalTimesIndices[leg]) = updateFootSchedule(eesContactFlagStocks[leg]);
   }
-
   for (size_t j = 0; j < numFeet_; j++)
   {
     feetXTrajs_[j].clear();
@@ -203,13 +207,10 @@ void SwingTrajectoryPlanner::update(const ModeSchedule& modeSchedule, const Targ
     feetZTrajs_[j].reserve(modeSequence.size());
     startStopTime_[j].reserve(modeSequence.size());
 
-    vector3_t last_stance_point;
-    last_stance_point(0) = 0;
-    last_stance_point(1) = 0;
-    last_stance_point(2) = 0;
+
     for (int p = 0; p < modeSequence.size(); ++p)
     {
-      if (!eesContactFlagStocks[j][p])
+      if (!eesContactFlagStocks[j][p])    //摆动相
       {  // for a swing leg
         const int swingStartIndex = startTimesIndices[j][p];
         const int swingFinalIndex = finalTimesIndices[j][p];
@@ -240,15 +241,16 @@ void SwingTrajectoryPlanner::update(const ModeSchedule& modeSchedule, const Targ
           vector_t next_middle_body_pos = targetTrajectories.getDesiredState(next_middle_time).segment<6>(6);
           vector_t current_body_pos = targetTrajectories.getDesiredState(initTime).segment<6>(6);
           vector_t current_body_vel = targetTrajectories.stateTrajectory[0].segment<3>(0);
+          //获取下一步落脚点
           next_stance_position[j] = calNextFootPos(j, initTime, swingFinalTime, next_middle_time, next_middle_body_pos,
                                                    current_body_pos, current_body_vel);
           last_final_idx[j] = swingFinalIndex;
         }
-
+        //摆动腿轨迹
         genSwingTrajs(j, initTime, swingStartTime, swingFinalTime, last_stance_position[j], next_stance_position[j]);
 
       }
-      else
+      else    //支撑相
       {
         const int stanceStartIndex = startTimesIndices[j][p];
         const int stanceFinalIndex = finalTimesIndices[j][p];
@@ -553,12 +555,12 @@ SwingTrajectoryPlanner::Config loadSwingTrajectorySettings(const std::string& fi
   loadData::loadPtreeValue(pt, config.touchDownVelocity, prefix + "touchDownVelocity", verbose);
   loadData::loadPtreeValue(pt, config.swingHeight, prefix + "swingHeight", verbose);
   loadData::loadPtreeValue(pt, config.swingTimeScale, prefix + "swingTimeScale", verbose);
-  loadData::loadPtreeValue(pt, config.feet_bias_x1, prefix + "feet_bias_x1", verbose);
-  loadData::loadPtreeValue(pt, config.feet_bias_x2, prefix + "feet_bias_x2", verbose);
-  loadData::loadPtreeValue(pt, config.feet_bias_y, prefix + "feet_bias_y", verbose);
-  loadData::loadPtreeValue(pt, config.feet_bias_z, prefix + "feet_bias_z", verbose);
+  loadData::loadPtreeValue(pt, config.feet_bias_l1, prefix + "feet_bias_l1", verbose);
+  loadData::loadPtreeValue(pt, config.feet_bias_l2, prefix + "feet_bias_l2", verbose);
+  loadData::loadPtreeValue(pt, config.feet_bias_w, prefix + "feet_bias_w", verbose);
+  loadData::loadPtreeValue(pt, config.feet_bias_h, prefix + "feet_bias_h", verbose);
   loadData::loadPtreeValue(pt, config.next_position_z, prefix + "next_position_z", verbose);
-
+  loadData::loadPtreeValue(pt, config.forwardx, prefix + "forwardx", verbose);
   if (verbose)
   {
     std::cerr << " #### =============================================================================" << std::endl;

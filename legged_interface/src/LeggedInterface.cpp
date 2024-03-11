@@ -92,8 +92,9 @@ LeggedInterface::LeggedInterface(const std::string& taskFile, const std::string&
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc", verbose);
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp", verbose);
   sqpSettings_ = sqp::loadSettings(taskFile, "sqp", verbose);
-  ipmSettings_ = ipm::loadSettings(taskFile, "ipm", verbose);
   rolloutSettings_ = rollout::loadSettings(taskFile, "rollout", verbose);
+  //没用上
+  ipmSettings_ = ipm::loadSettings(taskFile, "ipm", verbose);    
 }
 
 /******************************************************************************************************/
@@ -106,9 +107,7 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
 
   initialState_.setZero(centroidalModelInfo_.stateDim);
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
-
   setupReferenceManager(taskFile, urdfFile, referenceFile, verbose);
-
   problemPtr_ = std::make_unique<OptimalControlProblem>();
 
   std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
@@ -121,14 +120,13 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
   scalar_t frictionCoefficient = 0.7;
   RelaxedBarrierPenalty::Config barrierPenaltyConfig;
   std::tie(frictionCoefficient, barrierPenaltyConfig) = loadFrictionConeSettings(taskFile, verbose);
-
   for (size_t i = 0; i < centroidalModelInfo_.numThreeDofContacts; i++)
   {
     const std::string& footName = modelSettings_.contactNames3DoF[i];
 
     std::unique_ptr<EndEffectorKinematics<scalar_t>> eeKinematicsPtr = getEeKinematicsPtr({ footName }, footName);
 
-    if (useHardFrictionConeConstraint_)
+    if (useHardFrictionConeConstraint_)   //默认false
     {
       problemPtr_->inequalityConstraintPtr->add(footName + "_frictionCone",
                                                 getFrictionConeConstraint(i, frictionCoefficient));
@@ -148,13 +146,11 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
     problemPtr_->softConstraintPtr->add(footName + "_xySwingSoft",
                                         getSoftSwingTrajConstraint(*eeKinematicsPtr, i, taskFile, verbose));
   }
-
   problemPtr_->softConstraintPtr->add("StateInputLimitSoft", getLimitConstraints(centroidalModelInfo_));
   problemPtr_->stateSoftConstraintPtr->add(
       "selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, "selfCollision", verbose));
   setupPreComputation(taskFile, urdfFile, referenceFile, verbose);
   rolloutPtr_ = std::make_unique<TimeTriggeredRollout>(*problemPtr_->dynamicsPtr, rolloutSettings_);
-
   constexpr bool extendNormalizedNomentum = true;
   initializerPtr_ =
       std::make_unique<LeggedRobotInitializer>(centroidalModelInfo_, *referenceManagerPtr_, extendNormalizedNomentum);
@@ -191,12 +187,12 @@ void LeggedInterface::setupModel(const std::string& taskFile, const std::string&
   // PinocchioInterface
   pinocchioInterfacePtr_ = std::make_unique<PinocchioInterface>(
       centroidal_model::createPinocchioInterface(urdfFile, modelSettings_.jointNames));
-
   // CentroidalModelInfo
   centroidalModelInfo_ = centroidal_model::createCentroidalModelInfo(
       *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile),
       centroidal_model::loadDefaultJointState(pinocchioInterfacePtr_->getModel().nq - 6, referenceFile),
       modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
+    
 }
 
 /******************************************************************************************************/
@@ -206,10 +202,12 @@ void LeggedInterface::setupReferenceManager(const std::string& taskFile, const s
                                             const std::string& referenceFile, bool verbose)
 {
   auto swingTrajectoryPlanner = std::make_unique<SwingTrajectoryPlanner>(
-      loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose));
+      loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose));  //新增：设置步态周期
+  const auto trotTemplate = loadModeSequenceTemplate(referenceFile, "TrotTemplate", false);
   referenceManagerPtr_ = std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(referenceFile, verbose),
                                                                          std::move(swingTrajectoryPlanner),
-                                                                         *pinocchioInterfacePtr_, centroidalModelInfo_);
+                                                                         *pinocchioInterfacePtr_, centroidalModelInfo_,trotTemplate);
+                                                                    
 }
 
 /******************************************************************************************************/

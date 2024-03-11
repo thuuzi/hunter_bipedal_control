@@ -54,6 +54,7 @@ GaitSchedule::GaitSchedule(ModeSchedule initModeSchedule, ModeSequenceTemplate i
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+////更新模板序列，并在startTime至finalTime插入根据新的模板序列生成的时间序列
 void GaitSchedule::insertModeSequenceTemplate(const ModeSequenceTemplate& modeSequenceTemplate, scalar_t startTime,
                                               scalar_t finalTime)
 {
@@ -121,8 +122,7 @@ ModeSchedule GaitSchedule::getModeSchedule(scalar_t lowerBoundTime, scalar_t upp
 }
 
 /******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//根据模板序列，接着之前的事件时间序列，增加stratTime（大于当前最大时间）至finalTime序列
 void GaitSchedule::tileModeSequenceTemplate(scalar_t startTime, scalar_t finalTime)
 {
   auto& eventTimes = modeSchedule_.eventTimes;

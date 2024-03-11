@@ -74,7 +74,7 @@ inline contact_flag_t modeNumber2StanceLeg(const size_t& modeNumber)
       break;  // 0:
     case 1:
       stanceLegs = contact_flag_t{ false, true, false, true };
-      break;  // 1:
+      break;  // 1: 右腿支撑
     case 2:
       stanceLegs = contact_flag_t{ true, false, true, false };
       break;  // 2:

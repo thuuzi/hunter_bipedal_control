@@ -42,7 +42,6 @@ public:
 
 private:
   std::string name_;
-
   const bool* isContact_ = { nullptr };
 };
 

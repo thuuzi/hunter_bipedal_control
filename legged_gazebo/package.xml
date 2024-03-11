@@ -19,4 +19,5 @@
         <gazebo_ros_control plugin="${prefix}/legged_hw_sim_plugins.xml"/>
         <gazebo_ros gazebo_model_path="${prefix}"/>
     </export>
+
 </package>

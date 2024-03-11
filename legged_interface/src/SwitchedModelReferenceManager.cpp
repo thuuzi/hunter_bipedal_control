@@ -67,7 +67,8 @@ ModeSequenceTemplate trot(trot_times, trot_modes);
 SwitchedModelReferenceManager::SwitchedModelReferenceManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
                                                              std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr,
                                                              PinocchioInterface pinocchioInterface,
-                                                             CentroidalModelInfo info)
+                                                             CentroidalModelInfo info,
+                                                             ModeSequenceTemplate trotTemplate)
   : ReferenceManager(TargetTrajectories(), ModeSchedule())
   , gaitSchedulePtr_(std::move(gaitSchedulePtr))
   , swingTrajectoryPtr_(std::move(swingTrajectoryPtr))
@@ -78,6 +79,7 @@ SwitchedModelReferenceManager::SwitchedModelReferenceManager(std::shared_ptr<Gai
   , info_(std::move(info))
   , velCmdInBuf_(std::move(vector_t::Zero(6)))
   , velCmdOutBuf_(std::move(vector_t::Zero(6)))
+  , trotTemplate_(trotTemplate)
 {
   pitch_ = 0.0;
   roll_ = 0.0;
@@ -132,7 +134,7 @@ contact_flag_t SwitchedModelReferenceManager::getContactFlags(scalar_t time) con
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
+//在referenceManager中的preSolverRun（）被调用，输入是接收mpc_target话题更新后的targetTrajectories，modeSchedule于本函数内生成
 void SwitchedModelReferenceManager::modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
                                                      TargetTrajectories& targetTrajectories, ModeSchedule& modeSchedule)
 {
@@ -147,13 +149,11 @@ void SwitchedModelReferenceManager::modifyReferences(scalar_t initTime, scalar_t
   scalar_t body_height = targetTrajectories.stateTrajectory[0](8);
 
   estContactFlagBuffer_.updateFromBuffer();
-  const auto& est_con = estContactFlagBuffer_.get();
+  const auto& est_con = estContactFlagBuffer_.get();  //状态估计获得的接触状态，无用
 
-  const scalar_t terrainHeight = 0.0;
+  calculateVelAbs(targetTrajectories);    //获取过去一段时间平均速度VelAvg_
 
-  calculateVelAbs(targetTrajectories);
-
-  if (gaitType_ == 0)
+  if (gaitType_ == 0)   //gaitType默认为0，目前/gait_type话题无消息
   {
     walkGait(body_height, initTime, finalTime, modeSchedule);
   }
@@ -166,20 +166,21 @@ void SwitchedModelReferenceManager::modifyReferences(scalar_t initTime, scalar_t
   swingTrajectoryPtr_->setBodyVelCmd(velCmdInBuf_.get());
   swingTrajectoryPtr_->setCurrentFeetPosition(inverseKinematics_.computeFootPos(initState));
   swingTrajectoryPtr_->update(modeSchedule, targetTrajectories, initTime);
-
+ // std::cout<<"mode times:";
+//  for(int i = 0; i< modeSchedule.eventTimes.size();i++){
+//      std::cout<<", "<<modeSchedule.eventTimes[i];
+//  }
+//  std::cout<<std::endl;
   calculateJointRef(initTime, finalTime, initState, targetTrajectories);
 }
 
 scalar_t SwitchedModelReferenceManager::findInsertModeSequenceTemplateTimer(ModeSchedule& modeSchedule,
                                                                             scalar_t current_time)
 {
-  auto& modeSequence = modeSchedule.modeSequence;
   auto& eventTimes = modeSchedule.eventTimes;
-
-  const auto time_insert_it = std::lower_bound(eventTimes.begin(), eventTimes.end(), current_time);
+  const auto time_insert_it = std::lower_bound(eventTimes.begin(), eventTimes.end(), current_time); //查找第一个大于等于current_time的元素
   const size_t id = std::distance(eventTimes.begin(), time_insert_it);
-
-  return eventTimes[id];
+  return eventTimes[id];  //查找并返回与当前时间（current_time）最接近但不小于当前时间的事件时间
 }
 
 void SwitchedModelReferenceManager::walkGait(scalar_t body_height, scalar_t initTime, scalar_t finalTime,
@@ -201,7 +202,7 @@ void SwitchedModelReferenceManager::walkGait(scalar_t body_height, scalar_t init
     {
       printf("start to trot\n");
       auto inserTimer = findInsertModeSequenceTemplateTimer(modeSchedule, initTime);
-      gaitSchedulePtr_->insertModeSequenceTemplate(trot, inserTimer, finalTime);
+      gaitSchedulePtr_->insertModeSequenceTemplate(trotTemplate_, inserTimer, finalTime); //替换为trotTemplate
       gaitLevel_ = 1;
     }
   }
@@ -234,8 +235,8 @@ void SwitchedModelReferenceManager::calculateVelAbs(TargetTrajectories& targetTr
   vel_est = targetTrajectories.stateTrajectory[0].segment(0, 6);
   vector3_t angular = targetTrajectories.stateTrajectory[0].segment(9, 3);
   vel_cmd.head(3) = getRotationMatrixFromZyxEulerAngles(angular) * vel_cmd.head(3);
-  vel_cmd(2) = 0;
-  vel_cmd(3) = vel_cmd(3) / 3.0;
+  vel_cmd(2) = 0;   //vz
+  vel_cmd(3) = vel_cmd(3) / 3.0;   //wz
   auto vel_cmd_abs = vel_cmd.head(4).norm();
   vel_est(2) = 0;
   vel_est(3) = vel_est(3) / 3.0;
@@ -244,8 +245,8 @@ void SwitchedModelReferenceManager::calculateVelAbs(TargetTrajectories& targetTr
   velAbsHistory_.push_front(velAbs_);
   while (velAbsHistory_.size() > 50)
     velAbsHistory_.pop_back();
-  velAvg_ = std::accumulate(velAbsHistory_.begin(), velAbsHistory_.end(), 0.0) / velAbsHistory_.size();
-  stanceTime_ = std::max(0.225 / velAvg_, 0.15);
+  velAvg_ = std::accumulate(velAbsHistory_.begin(), velAbsHistory_.end(), 0.0) / velAbsHistory_.size(); //过去一段时间的平均速度
+  stanceTime_ = std::max(0.225 / velAvg_, 0.15);    //无用
 }
 
 void SwitchedModelReferenceManager::calculateJointRef(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
@@ -258,7 +259,7 @@ void SwitchedModelReferenceManager::calculateJointRef(scalar_t initTime, scalar_
   if (targetTrajectories.size() <= 1)
     return;
   auto q_ref = vector_t(info_.generalizedCoordinatesNum);
-
+  //对参考轨迹进行0.15s间隔的采样
   const scalar_t step = 0.15;
   int sample_size = floor((finalTime - initTime) / step) + 1;
   if (sample_size <= 2)
@@ -269,7 +270,7 @@ void SwitchedModelReferenceManager::calculateJointRef(scalar_t initTime, scalar_
   targetTrajectories.timeTrajectory.resize(sample_size);
   targetTrajectories.stateTrajectory.resize(sample_size);
   targetTrajectories.inputTrajectory.resize(sample_size);
-
+  //线性插值轨迹
   for (int i = 0; i < sample_size; i++)
   {
     targetTrajectories.timeTrajectory[i] = Ts[i];
@@ -279,24 +280,30 @@ void SwitchedModelReferenceManager::calculateJointRef(scalar_t initTime, scalar_
   const auto& joint_num = info_.actuatedDofNum;
   targetTrajectories.stateTrajectory[0].segment(6 + 6, joint_num) = defaultJointState_;
 
-  const int feet_num = 2;
-  for (int i = 0; i < sample_size; i++)
-  {
-    q_ref.head<6>() = targetTrajectories.stateTrajectory[i].segment<6>(6);
-    q_ref.segment(6, joint_num) = targetTrajectories.stateTrajectory[std::max(i - 1, 0)].segment(6 + 6, joint_num);
-    vector3_t des_foot_p;
-    for (int leg = 0; leg < feet_num; leg++)
-    {
-      int index = InverseKinematics::leg2index(leg);
-      des_foot_p.x() = swingTrajectoryPtr_->getXpositionConstraint(leg, Ts[i]);
-      des_foot_p.y() = swingTrajectoryPtr_->getYpositionConstraint(leg, Ts[i]);
-      des_foot_p.z() = swingTrajectoryPtr_->getZpositionConstraint(leg, Ts[i]);
-      ikTimer_.startTimer();
-      targetTrajectories.stateTrajectory[i].segment<5>(12 + index) =
-          inverseKinematics_.computeIK(q_ref, leg, des_foot_p, R_des);
-      ikTimer_.endTimer();
-    }
+  // const int feet_num = 2;
+  // for (int i = 0; i < sample_size; i++)
+  // {
+  //   q_ref.head<6>() = targetTrajectories.stateTrajectory[i].segment<6>(6);
+  //   q_ref.segment(6, joint_num) = targetTrajectories.stateTrajectory[std::max(i - 1, 0)].segment(6 + 6, joint_num);
+  //   vector3_t des_foot_p;
+  //   for (int leg = 0; leg < feet_num; leg++)    //左右腿分别进行ik解算出期望关节角
+  //   {
+  //     int index = InverseKinematics::leg2index(leg);
+  //     des_foot_p.x() = swingTrajectoryPtr_->getXpositionConstraint(leg, Ts[i]);
+  //     des_foot_p.y() = swingTrajectoryPtr_->getYpositionConstraint(leg, Ts[i]);
+  //     des_foot_p.z() = swingTrajectoryPtr_->getZpositionConstraint(leg, Ts[i]);
+  //   //   std::cout<<"des foot "<<leg<<", :"<<des_foot_p.transpose()<<std::endl;
+  //     ikTimer_.startTimer();
+  //     targetTrajectories.stateTrajectory[i].segment<5>(12 + index) =
+  //         inverseKinematics_.computeIK(q_ref, leg, des_foot_p, R_des);
+  //     ikTimer_.endTimer();
+  //   }
+  // }
+  for (int i = 0; i < sample_size; i++){
+    targetTrajectories.stateTrajectory[i].segment(6 + 6, joint_num) = defaultJointState_;
+    std::cout<<"i:"<<i<<", targetTrajectories.stateTrajectory:"<<targetTrajectories.stateTrajectory[i].transpose()<<"  ||"<<std::endl;
   }
+  
 }
 
 }  // namespace legged_robot

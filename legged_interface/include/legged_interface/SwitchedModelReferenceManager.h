@@ -69,7 +69,7 @@ class SwitchedModelReferenceManager : public ReferenceManager
 public:
   SwitchedModelReferenceManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
                                 std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr,
-                                PinocchioInterface pinocchioInterface, CentroidalModelInfo info);
+                                PinocchioInterface pinocchioInterface, CentroidalModelInfo info,ModeSequenceTemplate trotTemplate);
 
   ~SwitchedModelReferenceManager() override = default;
 
@@ -85,6 +85,7 @@ public:
   {
     latestStancePosition_.setBuffer(latest_stance_position);
   }
+  
 
   void setFeetBias(feet_array_t<vector3_t> feet_bias)
   {
@@ -168,6 +169,8 @@ protected:
 
   vector_t defaultJointState_;
   InverseKinematics inverseKinematics_;
+
+  ModeSequenceTemplate trotTemplate_;
 };
 
 }  // namespace legged_robot

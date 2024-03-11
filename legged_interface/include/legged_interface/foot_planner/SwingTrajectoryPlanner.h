@@ -63,11 +63,12 @@ public:
     scalar_t touchDownVelocity = 0.0;
     scalar_t swingHeight = 0.1;
     scalar_t swingTimeScale = 0.15;  // swing phases shorter than this time will be scaled down in height and velocity
-    scalar_t feet_bias_x1 = 0;
-    scalar_t feet_bias_x2 = 0;
-    scalar_t feet_bias_y = 0;
-    scalar_t feet_bias_z = 0;
+    scalar_t feet_bias_l1 = 0;
+    scalar_t feet_bias_l2 = 0;
+    scalar_t feet_bias_w = 0;
+    scalar_t feet_bias_h = 0;
     scalar_t next_position_z = 0.02;
+    scalar_t forwardx = 1.0;
   };
 
   SwingTrajectoryPlanner(Config config);

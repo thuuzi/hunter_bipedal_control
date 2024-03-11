@@ -9,7 +9,7 @@
   </joint> -->
 
   <gazebo>
-    <plugin name="gazebo_ros_control" filename="libhunter_bipedal_hw_sim.so">
+    <plugin name="gazebo_ros_control" filename="liblegged_bipedal_hw_sim.so">
       <robotNamespace>/</robotNamespace>
       <robotParam>legged_robot_description</robotParam>
       <robotSimType>legged_gazebo/LeggedHWSim</robotSimType>

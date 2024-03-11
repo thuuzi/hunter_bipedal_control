@@ -55,9 +55,9 @@ bool LeggedHWSim::initSim(const std::string& robot_namespace, ros::NodeHandle mo
   // Joint interface
   registerInterface(&hybridJointInterface_);
   std::vector<std::string> names = ej_interface_.getNames();
-  for (const auto& name : names)
+  for (const auto& name : names)    //逐个构造HybridJointHandle并插入hybridJointInterface_
   {
-    hybridJointDatas_.push_back(HybridJointData{ .joint_ = ej_interface_.getHandle(name) });
+    hybridJointDatas_.push_back(HybridJointData{ .joint_ = ej_interface_.getHandle(name) });    //.是成员访问符，指对joint_进行初始化
     HybridJointData& back = hybridJointDatas_.back();
     hybridJointInterface_.registerHandle(
         HybridJointHandle(back.joint_, &back.posDes_, &back.velDes_, &back.kp_, &back.kd_, &back.ff_));
@@ -72,7 +72,7 @@ bool LeggedHWSim::initSim(const std::string& robot_namespace, ros::NodeHandle mo
   }
   else
   {
-    parseImu(xmlRpcValue, parent_model);
+    parseImu(xmlRpcValue, parent_model);    //构造imuSensorInterface_的handle
   }
   if (!model_nh.getParam("gazebo/delay", delay_))
   {
@@ -84,11 +84,11 @@ bool LeggedHWSim::initSim(const std::string& robot_namespace, ros::NodeHandle mo
   }
   else
   {
-    parseContacts(xmlRpcValue);
+    parseContacts(xmlRpcValue);   //构造contactSensorInterface_的handle
   }
 
   contactManager_ = parent_model->GetWorld()->Physics()->GetContactManager();
-  contactManager_->SetNeverDropContacts(true);  
+  contactManager_->SetNeverDropContacts(true);    //系统始终执行接触检测并生成接触数据
   return ret;
 }
 
@@ -167,13 +167,13 @@ void LeggedHWSim::writeSim(ros::Time time, ros::Duration period)
 {
   for (auto joint : hybridJointDatas_)
   {
-    auto& buffer = cmdBuffer_.find(joint.joint_.getName())->second;
+    auto& buffer = cmdBuffer_.find(joint.joint_.getName())->second;   //std::deque<HybridJointCommand> 类型，->second指name对应的变量
     if (time == ros::Time(period.toSec()))
     {  // Simulation reset
       buffer.clear();
     }
 
-    while (!buffer.empty() && buffer.back().stamp_ + ros::Duration(delay_) < time)
+    while (!buffer.empty() && buffer.back().stamp_ + ros::Duration(delay_) < time)  //清空过期的控制指令
     {
       buffer.pop_back();
     }
@@ -185,10 +185,13 @@ void LeggedHWSim::writeSim(ros::Time time, ros::Duration period)
                                           .ff_ = joint.ff_ });
 
     const auto& cmd = buffer.back();
+    // if(joint.joint_.getName() == "lkp")
+    //   std::cout<<joint.joint_.getName()<<", cmd pos:"<<cmd.posDes_<<", pos:"<<joint.joint_.getPosition()<<", cmd:"<<cmd.kp_ * (cmd.posDes_ - joint.joint_.getPosition()) +
+    //                         cmd.kd_ * (cmd.velDes_ - joint.joint_.getVelocity()) + cmd.ff_<<", kp:"<<cmd.kp_<<", kd:"<<cmd.kd_<<", vel:"<<joint.joint_.getVelocity()<<std::endl;
     joint.joint_.setCommand(cmd.kp_ * (cmd.posDes_ - joint.joint_.getPosition()) +
-                            cmd.kd_ * (cmd.velDes_ - joint.joint_.getVelocity()) + cmd.ff_);
+                            cmd.kd_ * (cmd.velDes_ - joint.joint_.getVelocity()) + cmd.ff_);  //通过ej_interface_中handle,更新joint_effort_command_
   }
-  DefaultRobotHWSim::writeSim(time, period);
+  DefaultRobotHWSim::writeSim(time, period);//这里调用sim_joints_.set_forc(joint_effort_command）发送力
 }
 
 void LeggedHWSim::parseImu(XmlRpc::XmlRpcValue& imuDatas, const gazebo::physics::ModelPtr& parentModel)
@@ -273,5 +276,5 @@ void LeggedHWSim::parseContacts(XmlRpc::XmlRpcValue& contactNames)
 
 }  // namespace legged
 
-PLUGINLIB_EXPORT_CLASS(legged::LeggedHWSim, gazebo_ros_control::RobotHWSim)
-GZ_REGISTER_MODEL_PLUGIN(gazebo_ros_control::GazeboRosControlPlugin)  // Default plugin
+PLUGINLIB_EXPORT_CLASS(legged::LeggedHWSim, gazebo_ros_control::RobotHWSim)   //导出一个类作为可加载插件
+GZ_REGISTER_MODEL_PLUGIN(gazebo_ros_control::GazeboRosControlPlugin)  // 加载默认的模型插件
