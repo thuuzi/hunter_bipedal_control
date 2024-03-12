@@ -242,8 +242,10 @@ void SwingTrajectoryPlanner::update(const ModeSchedule& modeSchedule, const Targ
           vector_t current_body_pos = targetTrajectories.getDesiredState(initTime).segment<6>(6);
           vector_t current_body_vel = targetTrajectories.stateTrajectory[0].segment<3>(0);
           //获取下一步落脚点
+        
           next_stance_position[j] = calNextFootPos(j, initTime, swingFinalTime, next_middle_time, next_middle_body_pos,
                                                    current_body_pos, current_body_vel);
+            std::cout<<"swing j:"<<j<<",next_stance_position[j]："<<next_stance_position[j].transpose()<<", last_stance_position[j]"<<last_stance_position[j].transpose()<<std::endl;
           last_final_idx[j] = swingFinalIndex;
         }
         //摆动腿轨迹
@@ -297,15 +299,14 @@ vector3_t SwingTrajectoryPlanner::calNextFootPos(int feet, scalar_t current_time
   vector3_t roted_bias = getRotationMatrixFromZyxEulerAngles(angular) * feet_bias_[feet];
   vector3_t current_angular = current_body_pos.tail(3);
   auto current_rot = getRotationMatrixFromZyxEulerAngles(current_angular);
-  const vector3_t& vel_cmd_linear = current_rot * body_vel_cmd_.head(3);
+  const vector3_t& vel_cmd_linear = current_rot * body_vel_cmd_.head(3);  //指令速度
   const vector3_t& vel_cmd_angular = current_rot * body_vel_cmd_.tail(3);
 
   vector3_t current_body_vel_tmp = current_body_vel;
   current_body_vel_tmp(2) = 0;
-  const vector3_t& vel_linear = current_body_vel_tmp;
-
+  const vector3_t& vel_linear = current_body_vel_tmp;   //实际速度
   const scalar_t k = 0.03;
-  vector3_t p_shoulder = (stop_time - current_time) * (0.5 * vel_linear + 0.5 * vel_cmd_linear) + roted_bias;
+  vector3_t p_shoulder = (stop_time - current_time) * (0.5 * vel_linear + 0.5 * vel_cmd_linear) + roted_bias; //根据实际速度和指令速度的平均推测落地时hip的移动距离
   vector3_t p_symmetry = (next_middle_time - stop_time) * vel_linear + k * (vel_linear - vel_cmd_linear);
   vector3_t p_centrifugal = 0.5 * sqrt(current_body_pos(2) / 9.81) * vel_linear.cross(vel_cmd_angular);
   next_stance_position = current_body_pos.head(3) + p_shoulder + p_symmetry + p_centrifugal;

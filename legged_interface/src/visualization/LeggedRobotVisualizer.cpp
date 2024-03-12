@@ -434,7 +434,7 @@ void LeggedRobotVisualizer::publishDesiredTrajectory(
     markerArray.markers.back().ns = "EE desired Trajectories";
   }
   markerArray.markers.emplace_back(getLineMsg(std::move(desiredBasePositionMsg), Color::green, trajectoryLineWidth_));
-  markerArray.markers.back().ns = "CoM desired Trajectory";
+  markerArray.markers.back().ns = "Base desired Trajectory";
 
   // Add headers and Id
   assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg(frameId_, timeStamp));

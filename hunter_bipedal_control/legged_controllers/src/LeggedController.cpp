@@ -141,7 +141,7 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   updateStateEstimation(shifted_time, period);
 
   // Update the current state of the system
-  mpcMrtInterface_->setCurrentObservation(currentObservation_);
+  mpcMrtInterface_->setCurrentObservation(currentObservation_);    //[质心动量、角动量、浮动基位置、姿态、关节角]  6+6+nj维
 
   // Evaluate the current policy
   vector_t optimizedState(stateDim_), optimizedInput(inputDim_);  //状态包括浮动基速度，浮动基位置，关节位置，输入包括关节速度和接触力
@@ -172,6 +172,26 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
     plannedMode = 3;
     wbc_->setStanceMode(true);
   }
+  if(robot_name_=="bipedv5"){ //平移关节的期望角度设成一致
+    double lp = (optimizedState(14)+optimizedState(16))/2.0;
+    double rp = (optimizedState(20)+optimizedState(22))/2.0;
+    std::cout<<"MPC, lp 1:"<<optimizedState(14)<<", lp 2:"<<optimizedState(16)<<", lp:"<<lp<<std::endl;
+    std::cout<<"MPC, rp 1:"<<optimizedState(20)<<", rp 2:"<<optimizedState(22)<<", rp:"<<rp<<std::endl;
+    optimizedState(14) = lp;
+    optimizedState(16) = lp;
+    optimizedState(20) = rp;
+    optimizedState(22) = rp;
+    double lpv = (optimizedInput(14)+optimizedInput(16))/2.0;
+    double rpv = (optimizedInput(20)+optimizedInput(22))/2.0;
+    std::cout<<"MPC, lpv 1:"<<optimizedInput(14)<<", lpv 2:"<<optimizedInput(16)<<", lpv:"<<lpv<<std::endl;
+    std::cout<<"MPC, rpv 1:"<<optimizedInput(20)<<", rpv 2:"<<optimizedInput(22)<<", rpv:"<<rpv<<std::endl;
+    optimizedInput(14) = lpv;
+    optimizedInput(16) = lpv;
+    optimizedInput(20) = rpv;
+    optimizedInput(22) = rpv;
+  }
+
+
   const vector_t& mpc_planned_body_pos = optimizedState.segment(6, 6);
   const vector_t& mpc_planned_joint_pos = optimizedState.segment(6 + 6, jointDim_);
   const vector_t& mpc_planned_joint_vel = optimizedInput.segment(12, jointDim_);
@@ -239,8 +259,14 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
       }else if(robot_name_=="bipedv5"){
         if (j == 0 || j == 1 || j == 6 || j == 7) //髋关节
           hybridJointHandles_[j].setCommand(posDes_[j], velDes_[j],cmdContactFlag[int(j / 5)] ? kp_small_stance : kp_small_swing, kd_small,wbc_planned_torque(j));
-        else if(j == 2|| j == 4 || j == 8 || j == 10) //平移关节
-          hybridJointHandles_[j].setCommand(posDes_[j], velDes_[j], kp_pri_walk, kd_pri_walk,wbc_planned_torque(j));
+        else if(j == 2|| j == 4){ //平移关节
+         hybridJointHandles_[j].setCommand((posDes_[2]+posDes_[4])/2.0, (velDes_[2]+velDes_[4])/2.0, kp_pri_walk, kd_pri_walk,(wbc_planned_torque(2)+wbc_planned_torque(4))/2.0);
+       // hybridJointHandles_[j].setCommand((posDes_[2]+posDes_[4])/2.0, (velDes_[2]+velDes_[4])/2.0, kp_pri_walk, kd_pri_walk,wbc_planned_torque(j));
+          std::cout<<"wbc_planned_torque(j):"<<wbc_planned_torque(j)<<std::endl;
+      } 
+        else if( j == 8 || j == 10)
+           hybridJointHandles_[j].setCommand((posDes_[8]+posDes_[10])/2.0, (velDes_[8]+velDes_[10])/2.0, kp_pri_walk, kd_pri_walk,(wbc_planned_torque(8)+wbc_planned_torque(10))/2.0);
+         // hybridJointHandles_[j].setCommand((posDes_[8]+posDes_[10])/2.0, (velDes_[8]+velDes_[10])/2.0, kp_pri_walk, kd_pri_walk,wbc_planned_torque(j));
         else if (j == 5 || j == 11)    //脚踝关节
           hybridJointHandles_[j].setCommand(posDes_[j], velDes_[j],cmdContactFlag[int(j / 5)] ? kp_small_stance : kp_small_swing, kd_feet,wbc_planned_torque(j));
         else    //其他关节
@@ -274,8 +300,8 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   PrimalSolution primal_solution = mpc_updated_ ? mpcMrtInterface_->getPolicy() : PrimalSolution();
 
   // Visualization TO dO:更改发布tf变换中使用hunter的变量名
-  // robotVisualizer_->update(currentObservation_, primal_solution, command_data,
-  //                          leggedInterface_->getSwitchedModelReferenceManagerPtr()->getSwingTrajectoryPlanner());
+  robotVisualizer_->update(currentObservation_, primal_solution, command_data,
+                           leggedInterface_->getSwitchedModelReferenceManagerPtr()->getSwingTrajectoryPlanner());
   selfCollisionVisualization_->update(currentObservation_);
 
   // Publish the observation. Only needed for the command interface
@@ -339,9 +365,10 @@ void LeggedController::updateStateEstimation(const ros::Time& time, const ros::D
                             linearAccelCovariance);
   measuredRbdState_ = stateEstimate_->update(time, period);   //[浮动基姿态、位置、关节角度、浮动基角速度、线速度、关节速度] 2*(3+3+nj)维度
 
-  currentObservation_.time = time.toSec();
+  currentObservation_.time = time.toSec();    //[质心动量、角动量、浮动基位置、姿态、关节角]  6+6+nj维
   scalar_t yawLast = currentObservation_.state(9);
-  currentObservation_.state.head(stateDim_) = rbdConversions_->computeCentroidalStateFromRbdModel(measuredRbdState_);
+  currentObservation_.state.head(stateDim_) = rbdConversions_->computeCentroidalStateFromRbdModel(measuredRbdState_); //浮动基速度转化为质心动量
+
   currentObservation_.state(9) = yawLast + angles::shortest_angular_distance(yawLast, currentObservation_.state(9));
   currentObservation_.mode = stateEstimate_->getMode();
 
@@ -352,8 +379,7 @@ void LeggedController::updateStateEstimation(const ros::Time& time, const ros::D
   stateEstimate_->setCmdTorque(jointTor);
   stateEstimate_->estContactForce(period);
 
-  auto remove_gravity = linearAccel;
-  remove_gravity(2) -= 9.81;
+
 }
 
 LeggedController::~LeggedController()
