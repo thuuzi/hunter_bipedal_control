@@ -18,7 +18,7 @@ FromTopicStateEstimate::FromTopicStateEstimate(PinocchioInterface pinocchioInter
   : StateEstimateBase(std::move(pinocchioInterface), std::move(info), eeKinematics)
 {
   ros::NodeHandle nh;
-  sub_ = nh.subscribe<nav_msgs::Odometry>("/ground_truth/state", 10, &FromTopicStateEstimate::callback, this);
+  sub_ = nh.subscribe<nav_msgs::Odometry>("/ground_truth/state", 1, &FromTopicStateEstimate::callback, this);
 }
 
 void FromTopicStateEstimate::callback(const nav_msgs::Odometry::ConstPtr& msg)
@@ -39,7 +39,6 @@ vector_t FromTopicStateEstimate::update(const ros::Time& /*time*/, const ros::Du
       Eigen::Matrix<scalar_t, 3, 1>(odom.twist.twist.linear.x, odom.twist.twist.linear.y, odom.twist.twist.linear.z));
 
   publishMsgs(odom);
-
   return rbdState_;
 }
 

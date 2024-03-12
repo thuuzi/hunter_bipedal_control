@@ -3,26 +3,24 @@ centroidalModelType             0      // 0: FullCentroidalDynamics, 1: Single R
 
 joint_names
 {
-  [0] ly
-  [1] lh
-  [2] lkp
-  [3] lk
-  [4] lap
-  [5] la
-  [6] ry
-  [7] rh
-  [8] rkp
-  [9] rk
-  [10] rap
-  [11] ra
+  [0] left_hip_yaw_joint
+  [1] left_hip_abad_joint
+  [2] left_hip_pitch
+  [3] left_knee
+  [4] left_ankle
+  [5] right_hip_yaw_joint
+  [6] right_hip_abad_joint
+  [7] right_hip_pitch
+  [8] right_knee
+  [9] right_ankle
 }
 
 contact_names_3DoF
 {
-    [0] left_front_ankle_Link
-    [1] right_front_ankle_Link
-    [2] left_back_ankle_Link
-    [3] right_back_ankle_Link
+    [0] left_front_foot
+    [1] right_front_foot
+    [2] left_back_foot
+    [3] right_back_foot
 }
 
 legged_robot_interface
@@ -39,7 +37,7 @@ model_settings
 
   verboseCppAd                  false
   recompileLibrariesCppAd       false
-  modelFolderCppAd              /tmp/bridge/legged_control/bipedv5
+  modelFolderCppAd              /tmp/bridge/legged_control/mithmd
 }
 
 
@@ -52,12 +50,12 @@ swing_trajectory_config
 
   feet_bias_l1                  0.12
   feet_bias_l2                 -0.08
-  feet_bias_w                   -0.3
-  feet_bias_h                  -0.833422
+  feet_bias_w                   0.2
+  feet_bias_h                  -0.635
   
   next_stance_position_z        0.02
 
-  forwardx                     -1.0
+  forwardx                      1.0
 }
 
 ; DDP settings
@@ -191,24 +189,22 @@ initialState
    ;; Base Pose: [position, orientation] ;;
    (6,0)  0.0     ; p_base_x
    (7,0)  0.0     ; p_base_y
-   (8,0)  0.833422    ; p_base_z
+   (8,0)  0.635    ; p_base_z
    (9,0)  0.0     ; theta_base_z
    (10,0) 0.0     ; theta_base_y
    (11,0) 0.0     ; theta_base_x
 
    ;; Leg Joint Positions
-   (12,0)   0.0    ; ly
-   (13,0)   -0.4   ; lh
-   (14,0)   0.0    ; lkp
-   (15,0)   -0.8   ; lk
-   (16,0)   0.0    ; lap
-   (17,0)   0.4    ; la
-   (18,0)   0.0    ; ry
-   (19,0)   -0.4   ; rh
-   (20,0)   0.0    ; rkp
-   (21,0)   -0.8   ; rk
-   (22,0)   0.0    ; rap
-   (23,0)   0.4    ; ra
+   (12,0)   0.0    ; left_hip_yaw_joint
+   (13,0)   0.0   ; left_hip_abad_joint
+   (14,0)   -0.4    ; left_hip_pitch
+   (15,0)   1.0   ; left_knee
+   (16,0)   -0.6    ; left_ankle
+   (17,0)   0.0    ; right_hip_yaw_joint
+   (18,0)   0.0   ; right_hip_abad_joint
+   (19,0)   -0.4    ; right_hip_pitch
+   (20,0)   1.0   ; right_knee
+   (21,0)   -0.6    ; right_ankle
 }
 
 ; standard state weight matrix
@@ -233,18 +229,16 @@ Q
   (11,11) 500.0    ; theta_base_x
  
   ;; Leg Joint Positions: [L, R]
-  (12,12)  1000    ; ly
+  (12,12)  1     ; ly
   (13,13)  1     ; lh
-  (14,14)  100     ; lkp
+  (14,14)  1     ; lkp
   (15,15)  1     ; lk
-  (16,16)  100     ; lap
+  (16,16)  1     ; lap
   (17,17)  1     ; la
-  (18,18)  1000     ; ry
+  (18,18)  1     ; ry
   (19,19)  1     ; rh
-  (20,20)  100     ; rkp
+  (20,20)  1     ; rkp
   (21,21)  1     ; rk
-  (22,22)  100     ; rap
-  (23,23)  1     ; ra
 }
 
 ; control weight matrix
@@ -310,7 +304,7 @@ selfCollision
   {
   }
 
-  minimumDistance  0.15
+  minimumDistance  0.05
 
   ; relaxed log barrier parameters
   mu      1e-2
@@ -325,7 +319,6 @@ torqueLimitsTask
    (2,0)  60.0     ; motor 3
    (3,0)  60.0     ; motor 4
    (4,0)  60.0     ; motor 5
-   (5,0)  60.0     ; motor 6
 }
 
 frictionConeTask
@@ -335,7 +328,7 @@ frictionConeTask
 
 swingLegTask
 {
-    kp                   180  
+    kp                   160  
     kd                   18   
 }
 
@@ -347,7 +340,7 @@ baseAccelTask
 
 baseHeightTask
 {
-    kp                   500
+    kp                   20
     kd                   3
 }
 
@@ -360,7 +353,7 @@ baseAngularTask
 weight
 {
     swingLeg        100
-    baseAccel       10
+    baseAccel       1
     contactForce    0.1
 }
 

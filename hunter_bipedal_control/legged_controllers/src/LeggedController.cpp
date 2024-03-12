@@ -157,7 +157,7 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
     currentObservation_.input = optimizedInput;
     mpc_updated_ = true;
   }
-  std::cout<<"optimizedState:"<<optimizedState.tail(jointDim_+6).transpose()<<std::endl;
+ // std::cout<<"optimizedState:"<<optimizedState.tail(jointDim_+6).transpose()<<std::endl;
  // std::cout<<"optimizedInput:"<<optimizedInput.transpose()<<std::endl;
   if (setWalkFlag_)
   {
@@ -172,19 +172,20 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
     plannedMode = 3;
     wbc_->setStanceMode(true);
   }
+  
   if(robot_name_=="bipedv5"){ //平移关节的期望角度设成一致
     double lp = (optimizedState(14)+optimizedState(16))/2.0;
     double rp = (optimizedState(20)+optimizedState(22))/2.0;
-    std::cout<<"MPC, lp 1:"<<optimizedState(14)<<", lp 2:"<<optimizedState(16)<<", lp:"<<lp<<std::endl;
-    std::cout<<"MPC, rp 1:"<<optimizedState(20)<<", rp 2:"<<optimizedState(22)<<", rp:"<<rp<<std::endl;
+    //std::cout<<"MPC, lp 1:"<<optimizedState(14)<<", lp 2:"<<optimizedState(16)<<", lp:"<<lp<<std::endl;
+   // std::cout<<"MPC, rp 1:"<<optimizedState(20)<<", rp 2:"<<optimizedState(22)<<", rp:"<<rp<<std::endl;
     optimizedState(14) = lp;
     optimizedState(16) = lp;
     optimizedState(20) = rp;
     optimizedState(22) = rp;
     double lpv = (optimizedInput(14)+optimizedInput(16))/2.0;
     double rpv = (optimizedInput(20)+optimizedInput(22))/2.0;
-    std::cout<<"MPC, lpv 1:"<<optimizedInput(14)<<", lpv 2:"<<optimizedInput(16)<<", lpv:"<<lpv<<std::endl;
-    std::cout<<"MPC, rpv 1:"<<optimizedInput(20)<<", rpv 2:"<<optimizedInput(22)<<", rpv:"<<rpv<<std::endl;
+ //   std::cout<<"MPC, lpv 1:"<<optimizedInput(14)<<", lpv 2:"<<optimizedInput(16)<<", lpv:"<<lpv<<std::endl;
+  //  std::cout<<"MPC, rpv 1:"<<optimizedInput(20)<<", rpv 2:"<<optimizedInput(22)<<", rpv:"<<rpv<<std::endl;
     optimizedInput(14) = lpv;
     optimizedInput(16) = lpv;
     optimizedInput(20) = rpv;
@@ -232,7 +233,7 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
     }
     if (!loadControllerFlag_)   //没加载控制器时设置为默认关节位置
     {
-      if(robot_name_=="hunter"){
+      if(robot_name_=="hunter" || robot_name_ =="mit_humanoid"){
         if (j == 4 || j == 9)   //脚踝两个关节
           hybridJointHandles_[j].setCommand(mpc_planned_joint_pos[j], mpc_planned_joint_vel[j], kp_position, kd_feet, 0);
         else
@@ -244,12 +245,19 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
           hybridJointHandles_[j].setCommand(mpc_planned_joint_pos[j], mpc_planned_joint_vel[j], kp_pri, kd_pri, 0);
         else
           hybridJointHandles_[j].setCommand(mpc_planned_joint_pos[j], mpc_planned_joint_vel[j], kp_position, kd_position, 0);
+      }else if(robot_name_ == "bipedv5_sim"){
+        if (j == 4 || j == 9)   //脚踝两个关节
+          hybridJointHandles_[j].setCommand(mpc_planned_joint_pos[j], mpc_planned_joint_vel[j], kp_position, kd_feet, 0);
+        else if(j == 3|| j == 8 ) //平移关节
+          hybridJointHandles_[j].setCommand(mpc_planned_joint_pos[j], mpc_planned_joint_vel[j], kp_pri, kd_pri, 0);
+        else
+          hybridJointHandles_[j].setCommand(mpc_planned_joint_pos[j], mpc_planned_joint_vel[j], kp_position, kd_position, 0);
       }
     }
     else
     {
       contact_flag_t cmdContactFlag = modeNumber2StanceLeg(mpcMrtInterface_->getReferenceManager().getModeSchedule().modeAtTime(currentObservation_.time));
-      if(robot_name_=="hunter"){
+      if(robot_name_=="hunter" || robot_name_ =="mit_humanoid"){
         if (j == 0 || j == 1 || j == 5 || j == 6) //髋关节
           hybridJointHandles_[j].setCommand(posDes_[j], velDes_[j],cmdContactFlag[int(j / 5)] ? kp_small_stance : kp_small_swing, kd_small,wbc_planned_torque(j));
         else if (j == 4 || j == 9)    //脚踝关节
@@ -268,6 +276,15 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
            hybridJointHandles_[j].setCommand((posDes_[8]+posDes_[10])/2.0, (velDes_[8]+velDes_[10])/2.0, kp_pri_walk, kd_pri_walk,(wbc_planned_torque(8)+wbc_planned_torque(10))/2.0);
          // hybridJointHandles_[j].setCommand((posDes_[8]+posDes_[10])/2.0, (velDes_[8]+velDes_[10])/2.0, kp_pri_walk, kd_pri_walk,wbc_planned_torque(j));
         else if (j == 5 || j == 11)    //脚踝关节
+          hybridJointHandles_[j].setCommand(posDes_[j], velDes_[j],cmdContactFlag[int(j / 6)] ? kp_small_stance : kp_small_swing, kd_feet,wbc_planned_torque(j));
+        else    //其他关节
+          hybridJointHandles_[j].setCommand(posDes_[j], velDes_[j], cmdContactFlag[int(j / 6)] ? kp_big_stance : kp_big_swing, kd_big,wbc_planned_torque(j));
+      }else if(robot_name_=="bipedv5_sim"){
+        if (j == 0 || j == 1 || j == 5 || j == 6) //髋关节
+          hybridJointHandles_[j].setCommand(posDes_[j], velDes_[j],cmdContactFlag[int(j / 5)] ? kp_small_stance : kp_small_swing, kd_small,wbc_planned_torque(j));
+        else if( j == 3 || j == 8)
+           hybridJointHandles_[j].setCommand(posDes_[j], velDes_[j], kp_pri_walk, kd_pri_walk,wbc_planned_torque(j));
+        else if (j == 4 || j == 9)    //脚踝关节
           hybridJointHandles_[j].setCommand(posDes_[j], velDes_[j],cmdContactFlag[int(j / 5)] ? kp_small_stance : kp_small_swing, kd_feet,wbc_planned_torque(j));
         else    //其他关节
           hybridJointHandles_[j].setCommand(posDes_[j], velDes_[j], cmdContactFlag[int(j / 5)] ? kp_big_stance : kp_big_swing, kd_big,wbc_planned_torque(j));
@@ -341,9 +358,13 @@ void LeggedController::updateStateEstimation(const ros::Time& time, const ros::D
       leggedInterface_->getSwitchedModelReferenceManagerPtr()->getSwingTrajectoryPlanner()->threadSaftyGetStartStopTime(
           currentObservation_.time));
 
+
+
+
   for (size_t i = 0; i < 4; ++i)
   {
     quat.coeffs()(i) = imuSensorHandle_.getOrientation()[i];
+  //  std::cout<<"  i "<<i<<", "<<quat.coeffs()(i);
   }
 
   for (size_t i = 0; i < 3; ++i)
@@ -359,26 +380,32 @@ void LeggedController::updateStateEstimation(const ros::Time& time, const ros::D
     linearAccelCovariance(i) = imuSensorHandle_.getLinearAccelerationCovariance()[i];
   }
 
-  stateEstimate_->updateJointStates(jointPos, jointVel);
-  stateEstimate_->updateContact(cmdContactFlag);    //采用规划接触情况代替真实情况
-  stateEstimate_->updateImu(quat, angularVel, linearAccel, orientationCovariance, angularVelCovariance,
-                            linearAccelCovariance);
-  measuredRbdState_ = stateEstimate_->update(time, period);   //[浮动基姿态、位置、关节角度、浮动基角速度、线速度、关节速度] 2*(3+3+nj)维度
-
+   stateEstimate_->updateJointStates(jointPos, jointVel);
+   stateEstimate_->updateContact(cmdContactFlag);    //采用规划接触情况代替真实情况
+   stateEstimate_->updateImu(quat, angularVel, linearAccel, orientationCovariance, angularVelCovariance,
+                             linearAccelCovariance);
+   measuredRbdState_ = stateEstimate_->update(time, period);   //[浮动基姿态、位置、关节角度、浮动基角速度、线速度、关节速度] 2*(3+3+nj)维度
+  //gt值
+   gtState_->updateJointStates(jointPos, jointVel);
+  measuredRbdState2_ = gtState_->update(time, period); 
+  std::cout<<"state et: "<<measuredRbdState_(5)<<std::endl;
+  std::cout<<"state gt: "<<measuredRbdState2_(5)<<std::endl;
+  measuredRbdState_ = measuredRbdState2_;
   currentObservation_.time = time.toSec();    //[质心动量、角动量、浮动基位置、姿态、关节角]  6+6+nj维
   scalar_t yawLast = currentObservation_.state(9);
   currentObservation_.state.head(stateDim_) = rbdConversions_->computeCentroidalStateFromRbdModel(measuredRbdState_); //浮动基速度转化为质心动量
 
   currentObservation_.state(9) = yawLast + angles::shortest_angular_distance(yawLast, currentObservation_.state(9));
+  std::cout<<"new yaw:"<<currentObservation_.state(9)<<std::endl;
   currentObservation_.mode = stateEstimate_->getMode();
-
+  currentObservation_.mode = gtState_->getMode();
   const auto& reference_manager = leggedInterface_->getSwitchedModelReferenceManagerPtr();
   reference_manager->getSwingTrajectoryPlanner()->setBodyVelWorld(stateEstimate_->getBodyVelWorld());
   reference_manager->setEstContactFlag(cmdContactFlag);
 
-  stateEstimate_->setCmdTorque(jointTor);
-  stateEstimate_->estContactForce(period);
-
+   stateEstimate_->setCmdTorque(jointTor);
+   stateEstimate_->estContactForce(period);
+  
 
 }
 
@@ -463,6 +490,10 @@ void LeggedController::setupStateEstimate(const std::string& taskFile, bool verb
   stateEstimate_->loadSettings(taskFile, verbose);
   dynamic_cast<KalmanFilterEstimate&>(*stateEstimate_).loadSettings(taskFile, verbose);
   currentObservation_.time = 0;
+  //订阅话题grount_truth/state
+  gtState_ = std::make_shared<FromTopicStateEstimate>(
+      leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(), *eeKinematicsPtr_);
+  gtState_->loadSettings(taskFile, verbose);
 }
 
 void LeggedController::dynamicParamCallback(legged_controllers::TutorialsConfig& config, uint32_t level)

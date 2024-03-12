@@ -280,28 +280,29 @@ void SwitchedModelReferenceManager::calculateJointRef(scalar_t initTime, scalar_
   const auto& joint_num = info_.actuatedDofNum;
   targetTrajectories.stateTrajectory[0].segment(6 + 6, joint_num) = defaultJointState_;
 
-  // const int feet_num = 2;
-  // for (int i = 0; i < sample_size; i++)
-  // {
-  //   q_ref.head<6>() = targetTrajectories.stateTrajectory[i].segment<6>(6);
-  //   q_ref.segment(6, joint_num) = targetTrajectories.stateTrajectory[std::max(i - 1, 0)].segment(6 + 6, joint_num);
-  //   vector3_t des_foot_p;
-  //   for (int leg = 0; leg < feet_num; leg++)    //左右腿分别进行ik解算出期望关节角
-  //   {
-  //     int index = InverseKinematics::leg2index(leg);
-  //     des_foot_p.x() = swingTrajectoryPtr_->getXpositionConstraint(leg, Ts[i]);
-  //     des_foot_p.y() = swingTrajectoryPtr_->getYpositionConstraint(leg, Ts[i]);
-  //     des_foot_p.z() = swingTrajectoryPtr_->getZpositionConstraint(leg, Ts[i]);
-  //   //   std::cout<<"des foot "<<leg<<", :"<<des_foot_p.transpose()<<std::endl;
+   const int feet_num = 2;
+   for (int i = 0; i < sample_size; i++)
+  {
+     q_ref.head<6>() = targetTrajectories.stateTrajectory[i].segment<6>(6);
+     q_ref.segment(6, joint_num) = targetTrajectories.stateTrajectory[std::max(i - 1, 0)].segment(6 + 6, joint_num);
+     vector3_t des_foot_p;
+     for (int leg = 0; leg < feet_num; leg++)    //左右腿分别进行ik解算出期望关节角
+     {
+   //  int index = InverseKinematics::leg2index(leg);
+   
+       des_foot_p.x() = swingTrajectoryPtr_->getXpositionConstraint(leg, Ts[i]);
+       des_foot_p.y() = swingTrajectoryPtr_->getYpositionConstraint(leg, Ts[i]);
+       des_foot_p.z() = swingTrajectoryPtr_->getZpositionConstraint(leg, Ts[i]);
+        std::cout<<"des foot "<<leg<<", :"<<des_foot_p.transpose()<<"base :"<<q_ref.head<6>().transpose()<<std::endl;
   //     ikTimer_.startTimer();
   //     targetTrajectories.stateTrajectory[i].segment<5>(12 + index) =
   //         inverseKinematics_.computeIK(q_ref, leg, des_foot_p, R_des);
   //     ikTimer_.endTimer();
-  //   }
-  // }
+     }
+   }
   for (int i = 0; i < sample_size; i++){
     targetTrajectories.stateTrajectory[i].segment(6 + 6, joint_num) = defaultJointState_;
-    std::cout<<"i:"<<i<<", targetTrajectories.stateTrajectory:"<<targetTrajectories.stateTrajectory[i].transpose()<<"  ||"<<std::endl;
+   // std::cout<<"i:"<<i<<", targetTrajectories.stateTrajectory:"<<targetTrajectories.stateTrajectory[i].transpose()<<"  ||"<<std::endl;
   }
   
 }

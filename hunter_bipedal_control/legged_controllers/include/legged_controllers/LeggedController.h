@@ -81,8 +81,9 @@ protected:
 
   // State Estimation
   SystemObservation currentObservation_;
-  vector_t measuredRbdState_;
+  vector_t measuredRbdState_,measuredRbdState2_;
   std::shared_ptr<StateEstimateBase> stateEstimate_;
+  std::shared_ptr<StateEstimateBase> gtState_;
   std::shared_ptr<CentroidalModelRbdConversions> rbdConversions_;
 
   // Whole Body Control

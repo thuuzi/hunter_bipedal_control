@@ -76,7 +76,7 @@ void WbcBase::updateMeasured(const vector_t& rbdStateMeasured)
       qMeasured_.segment<3>(3), rbdStateMeasured.segment<3>(info_.generalizedCoordinatesNum));
   vMeasured_.tail(info_.actuatedDofNum) =
       rbdStateMeasured.segment(info_.generalizedCoordinatesNum + 6, info_.actuatedDofNum);
- // std::cout<<"qMeasured:"<<qMeasured_.transpose()<<std::endl;
+  std::cout<<"qMeasured:"<<qMeasured_.transpose()<<std::endl;
   const auto& model = pinocchioInterfaceMeasured_.getModel();
   auto& data = pinocchioInterfaceMeasured_.getData();
 
@@ -122,7 +122,7 @@ void WbcBase::updateDesired(const vector_t& stateDesired, const vector_t& inputD
 
   mapping_.setPinocchioInterface(pinocchioInterfaceDesired_);
   const auto qDesired = mapping_.getPinocchioJointPosition(stateDesired);
-  //std::cout<<"* qDesired:"<<qDesired.transpose()<<std::endl;
+  std::cout<<"* qDesired:"<<qDesired.transpose()<<std::endl;
   pinocchio::forwardKinematics(model, data, qDesired);
   pinocchio::computeJointJacobians(model, data, qDesired);
   pinocchio::updateFramePlacements(model, data);

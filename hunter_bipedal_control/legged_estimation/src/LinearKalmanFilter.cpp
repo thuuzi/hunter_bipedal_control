@@ -181,7 +181,7 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   return rbdState_;
 }
 
-void KalmanFilterEstimate::updateFromTopic()
+void KalmanFilterEstimate::updateFromTopic()  //视觉里程计更新，如果有
 {
   auto* msg = buffer_.readFromRT();
 
