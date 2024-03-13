@@ -66,10 +66,8 @@ vector_t PrismaticJointConstraint::getValue(scalar_t time, const vector_t& state
                                        const PreComputation& preComp) const
 {
   vector_t res = matrix_t::Zero(getNumConstraints(time), 1);
-  res(0) =state(14)-state(16);
-  res(1) = state(20)-state(22);
-  res(2) = input(14)-input(16);
-  res(3) = input(20)-input(22);
+  res(0) = input(14)-input(16);
+  res(1) = input(20)-input(22);
   return res;
 }
 
@@ -88,10 +86,6 @@ VectorFunctionLinearApproximation PrismaticJointConstraint::getLinearApproximati
   approx.dfdx(0,16) =-1; 
   approx.dfdx(1,20) =1;
   approx.dfdx(1,22) =-1; 
-  approx.dfdu(2,14) =1;
-  approx.dfdu(2,16) =-1; 
-  approx.dfdu(3,20) =1;
-  approx.dfdu(3,22) =-1; 
   return approx;
 }
 

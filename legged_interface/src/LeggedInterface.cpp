@@ -147,9 +147,9 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
     problemPtr_->softConstraintPtr->add(footName + "_xySwingSoft",
                                         getSoftSwingTrajConstraint(*eeKinematicsPtr, i, taskFile, verbose));
   }
-  // if(robot_name_ =="bipedv5")
-  //   problemPtr_->equalityConstraintPtr->add("prismatic",std::unique_ptr<StateInputConstraint>(new PrismaticJointConstraint()));
-  // std::cout<<"robot_name_-----------------------------   : "<<robot_name_<<std::endl;
+  //if(robot_name_ =="bipedv5")
+   // problemPtr_->equalityConstraintPtr->add("prismatic",std::unique_ptr<StateInputConstraint>(new PrismaticJointConstraint()));
+
   problemPtr_->softConstraintPtr->add("StateInputLimitSoft", getLimitConstraints(centroidalModelInfo_));
   problemPtr_->stateSoftConstraintPtr->add(
       "selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, "selfCollision", verbose));

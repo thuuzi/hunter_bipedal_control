@@ -27,7 +27,7 @@ contact_names_3DoF
 
 legged_robot_interface
 {
-  verbose                               true  // show the loaded parameters
+  verbose                               false // show the loaded parameters
 }
 
 model_settings

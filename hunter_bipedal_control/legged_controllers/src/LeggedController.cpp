@@ -68,7 +68,6 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   rbdConversions_ = std::make_shared<CentroidalModelRbdConversions>(leggedInterface_->getPinocchioInterface(),
                                                                     leggedInterface_->getCentroidalModelInfo());
   robotVisualizer_->setRobotName(robot_name_);
- // leggedInterface_->setRobotName(robot_name_);
   // Hardware interface
   auto* hybridJointInterface = robot_hw->get<HybridJointInterface>();
 
@@ -390,7 +389,7 @@ void LeggedController::updateStateEstimation(const ros::Time& time, const ros::D
   measuredRbdState2_ = gtState_->update(time, period); 
   std::cout<<"state et: "<<measuredRbdState_(5)<<std::endl;
   std::cout<<"state gt: "<<measuredRbdState2_(5)<<std::endl;
-  measuredRbdState_ = measuredRbdState2_;
+  measuredRbdState_.head(5) = measuredRbdState2_.head(5);
   currentObservation_.time = time.toSec();    //[质心动量、角动量、浮动基位置、姿态、关节角]  6+6+nj维
   scalar_t yawLast = currentObservation_.state(9);
   currentObservation_.state.head(stateDim_) = rbdConversions_->computeCentroidalStateFromRbdModel(measuredRbdState_); //浮动基速度转化为质心动量
@@ -431,6 +430,7 @@ void LeggedController::setupLeggedInterface(const std::string& taskFile, const s
                                             const std::string& referenceFile, bool verbose)
 {
   leggedInterface_ = std::make_shared<LeggedInterface>(taskFile, urdfFile, referenceFile);
+  leggedInterface_->setRobotName(robot_name_);
   leggedInterface_->setupOptimalControlProblem(taskFile, urdfFile, referenceFile, verbose);
 }
 
