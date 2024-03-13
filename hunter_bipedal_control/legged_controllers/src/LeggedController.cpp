@@ -40,8 +40,8 @@ namespace legged
 {
 bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh)
 {
-  
   // Initialize OCS2
+
   std::string urdfFile;
   std::string taskFile;
   std::string referenceFile;
@@ -99,7 +99,6 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   
   // loadEigenMatrix
   loadData::loadEigenMatrix(referenceFile, "defaultJointState", defalutJointPos_);
-
   return true;
 }
 
@@ -213,7 +212,6 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   scalar_t dt = period.toSec();
   posDes_ = posDes_ + 0.5 * wbc_planned_joint_acc * dt * dt;
   velDes_ = velDes_ + wbc_planned_joint_acc * dt;
-
   vector_t output_torque(jointDim_);
   //*********************** Set Joint Command: Normal Tracking *****************************//
   for (size_t j = 0; j < jointDim_; ++j)
@@ -384,8 +382,9 @@ void LeggedController::updateStateEstimation(const ros::Time& time, const ros::D
    stateEstimate_->updateImu(quat, angularVel, linearAccel, orientationCovariance, angularVelCovariance,
                              linearAccelCovariance);
    measuredRbdState_ = stateEstimate_->update(time, period);   //[浮动基姿态、位置、关节角度、浮动基角速度、线速度、关节速度] 2*(3+3+nj)维度
+
   //gt值
-   gtState_->updateJointStates(jointPos, jointVel);
+  gtState_->updateJointStates(jointPos, jointVel);
   measuredRbdState2_ = gtState_->update(time, period); 
   std::cout<<"state et: "<<measuredRbdState_(5)<<std::endl;
   std::cout<<"state gt: "<<measuredRbdState2_(5)<<std::endl;
@@ -397,7 +396,6 @@ void LeggedController::updateStateEstimation(const ros::Time& time, const ros::D
   currentObservation_.state(9) = yawLast + angles::shortest_angular_distance(yawLast, currentObservation_.state(9));
   std::cout<<"new yaw:"<<currentObservation_.state(9)<<std::endl;
   currentObservation_.mode = stateEstimate_->getMode();
-  currentObservation_.mode = gtState_->getMode();
   const auto& reference_manager = leggedInterface_->getSwitchedModelReferenceManagerPtr();
   reference_manager->getSwingTrajectoryPlanner()->setBodyVelWorld(stateEstimate_->getBodyVelWorld());
   reference_manager->setEstContactFlag(cmdContactFlag);

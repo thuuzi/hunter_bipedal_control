@@ -49,7 +49,7 @@ public:
   void update(const ros::Time& time, const ros::Duration& period) override;
   void starting(const ros::Time& time) override;
   void stopping(const ros::Time& /*time*/) override
-  {
+  {  
     mpcRunning_ = false;
   }
 
@@ -81,7 +81,8 @@ protected:
 
   // State Estimation
   SystemObservation currentObservation_;
-  vector_t measuredRbdState_,measuredRbdState2_;
+  vector_t measuredRbdState_;
+  vector_t measuredRbdState2_ = vector_t::Zero(10);
   std::shared_ptr<StateEstimateBase> stateEstimate_;
   std::shared_ptr<StateEstimateBase> gtState_;
   std::shared_ptr<CentroidalModelRbdConversions> rbdConversions_;
@@ -133,6 +134,7 @@ private:
   size_t footDim_{ 0 };
   size_t gencoordDim_{ 0 };
   size_t dofPerLeg_{ 0 };
+  
 
   std::atomic<scalar_t> kp_position{ 0 };
   std::atomic<scalar_t> kd_position{ 0 };
