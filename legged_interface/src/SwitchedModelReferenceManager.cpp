@@ -293,7 +293,7 @@ void SwitchedModelReferenceManager::calculateJointRef(scalar_t initTime, scalar_
        des_foot_p.x() = swingTrajectoryPtr_->getXpositionConstraint(leg, Ts[i]);
        des_foot_p.y() = swingTrajectoryPtr_->getYpositionConstraint(leg, Ts[i]);
        des_foot_p.z() = swingTrajectoryPtr_->getZpositionConstraint(leg, Ts[i]);
-        std::cout<<"des foot "<<leg<<", :"<<des_foot_p.transpose()<<"base :"<<q_ref.head<6>().transpose()<<std::endl;
+   //     std::cout<<"des foot "<<leg<<", :"<<des_foot_p.transpose()<<"base :"<<q_ref.head<6>().transpose()<<std::endl;
   //     ikTimer_.startTimer();
   //     targetTrajectories.stateTrajectory[i].segment<5>(12 + index) =
   //         inverseKinematics_.computeIK(q_ref, leg, des_foot_p, R_des);

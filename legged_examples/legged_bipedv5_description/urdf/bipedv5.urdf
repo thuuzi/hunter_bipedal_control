@@ -368,15 +368,15 @@
         <color
           rgba="0.89804 0.91765 0.92941 1" />
       </material>
-      <!-- <origin rpy="0 0 0" xyz="0.055 0.02 -0.06"/>
+      <!-- <origin rpy="0 0 0" xyz="0.055 0.02 -0.106"/>
         <geometry>
-            <box size="0.14 0.22 0.01"/>
+            <box size="0.12 0.22 0.01"/>
         </geometry> -->
     </visual>
     <collision>
      <origin rpy="0 0 0" xyz="0.055 0.02 -0.106"/>
         <geometry>
-            <box size="0.14 0.22 0.01"/>
+            <box size="0.12 0.22 0.01"/>
         </geometry>
     </collision>
   </link>
@@ -711,9 +711,9 @@
         izz="0.0027066" />
     </inertial>
     <visual>
-       <!-- <origin rpy="0 0 0" xyz="-0.055 0.02 -0.06"/>
+       <!-- <origin rpy="0 0 0" xyz="-0.055 0.02 -0.106"/>
         <geometry>
-            <box size="0.14 0.22 0.01"/>
+            <box size="0.12 0.22 0.01"/>
         </geometry> -->
       <origin
         xyz="0 0 0"
@@ -731,7 +731,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="-0.055 0.02 -0.106"/>
         <geometry>
-            <box size="0.14 0.22 0.01"/>
+            <box size="0.12 0.22 0.01"/>
         </geometry>
     </collision>
   </link>

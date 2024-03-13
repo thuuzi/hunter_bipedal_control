@@ -104,6 +104,9 @@ public:
   void publishOptimizedStateTrajectory(const ros::Time& timeStamp, const scalar_array_t& mpcTimeTrajectory,
                                        const vector_array_t& mpcStateTrajectory, const ModeSchedule& modeSchedule);
 
+  void setRobotName(std::string name){
+    robot_name_ = name;
+  }
 private:
   LeggedRobotVisualizer(const LeggedRobotVisualizer&) = delete;
   void publishJointTransforms(const ros::Time& timeStamp, const vector_t& jointAngles,
@@ -134,6 +137,8 @@ private:
   scalar_t lastTime_;
   scalar_t minPublishTimeDifference_;
   bool visualize_ik_flag_{};
+
+  std::string robot_name_;
 };
 
 }  // namespace legged

@@ -32,7 +32,7 @@ legged_robot_interface
 
 model_settings
 {
-  positionErrorGain             20
+  positionErrorGain             5
   phaseTransitionStanceTime     0.1
   gravityCompensation           false
   visualizeIK                   false
@@ -52,7 +52,7 @@ swing_trajectory_config
 
   feet_bias_l1                  0.12
   feet_bias_l2                 -0.08
-  feet_bias_w                   -0.3
+  feet_bias_w                   -0.25
   feet_bias_h                  -0.833422
   
   next_stance_position_z        0.02
@@ -233,18 +233,18 @@ Q
   (11,11) 500.0    ; theta_base_x
  
   ;; Leg Joint Positions: [L, R]
-  (12,12)  1000    ; ly
-  (13,13)  1     ; lh
+  (12,12)  100    ; ly
+  (13,13)  10     ; lh
   (14,14)  100     ; lkp
-  (15,15)  1     ; lk
-  (16,16)  100     ; lap
-  (17,17)  1     ; la
-  (18,18)  1000     ; ry
-  (19,19)  1     ; rh
+  (15,15)  10     ; lk
+  (16,16)  10     ; lap
+  (17,17)  10     ; la
+  (18,18)  100     ; ry
+  (19,19)  10     ; rh
   (20,20)  100     ; rkp
-  (21,21)  1     ; rk
+  (21,21)  10     ; rk
   (22,22)  100     ; rap
-  (23,23)  1     ; ra
+  (23,23)  10     ; ra
 }
 
 ; control weight matrix
@@ -310,7 +310,7 @@ selfCollision
   {
   }
 
-  minimumDistance  0.15
+  minimumDistance  0.1
 
   ; relaxed log barrier parameters
   mu      1e-2
@@ -347,8 +347,8 @@ baseAccelTask
 
 baseHeightTask
 {
-    kp                   500
-    kd                   3
+    kp                   100
+    kd                   5
 }
 
 baseAngularTask 
@@ -361,13 +361,13 @@ weight
 {
     swingLeg        100
     baseAccel       10
-    contactForce    0.1
+    contactForce    1
 }
 
 ; State Estimation
 kalmanFilter
 {
-    footRadius                  0.02
+    footRadius                  0.01
     imuProcessNoisePosition     0.02
     imuProcessNoiseVelocity     0.02
     footProcessNoisePosition    0.5

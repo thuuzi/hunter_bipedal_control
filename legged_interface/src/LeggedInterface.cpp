@@ -22,6 +22,7 @@ at www.bridgedp.com.
 #include "legged_interface/constraint/XYReferenceConstraintCppAd.h"
 #include "legged_interface/constraint/XYLimitConstraint.h"
 #include "legged_interface/constraint/ZeroForceConstraint.h"
+#include "legged_interface/constraint/PrismaticJointConstraint.h"
 #include "legged_interface/constraint/ZeroVelocityConstraintCppAd.h"
 #include "legged_interface/cost/LeggedRobotQuadraticTrackingCost.h"
 #include "legged_interface/initialization/LeggedRobotInitializer.h"
@@ -146,6 +147,9 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
     problemPtr_->softConstraintPtr->add(footName + "_xySwingSoft",
                                         getSoftSwingTrajConstraint(*eeKinematicsPtr, i, taskFile, verbose));
   }
+  // if(robot_name_ =="bipedv5")
+  //   problemPtr_->equalityConstraintPtr->add("prismatic",std::unique_ptr<StateInputConstraint>(new PrismaticJointConstraint()));
+  // std::cout<<"robot_name_-----------------------------   : "<<robot_name_<<std::endl;
   problemPtr_->softConstraintPtr->add("StateInputLimitSoft", getLimitConstraints(centroidalModelInfo_));
   problemPtr_->stateSoftConstraintPtr->add(
       "selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, "selfCollision", verbose));

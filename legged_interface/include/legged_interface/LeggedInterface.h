@@ -109,7 +109,9 @@ public:
   {
     return referenceManagerPtr_;
   }
-
+   void setRobotName(std::string name){
+    robot_name_ = name;
+  }
 protected:
   virtual void setupModel(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
                           bool verbose);
@@ -162,6 +164,7 @@ protected:
   std::unique_ptr<Initializer> initializerPtr_;
 
   vector_t initialState_;
+  std::string robot_name_;
 };
 
 }  // namespace legged

@@ -46,7 +46,7 @@ TargetTrajectories targetPoseToTargetTrajectories(const vector_t& targetPose, co
   vector_t currentPose = observation.state.segment<6>(6);
   scalar_t dz = BASE_HEIGHT - currentPose(2);
   dz = dz > 0 ? fmin(dz, changeLimit_[2]) : fmax(dz, -changeLimit_[2]);
-  currentPose(2) = currentPose(2) + dz;
+//  currentPose(2) = currentPose(2) + dz;
   currentPose(4) = 0;
   currentPose(5) = 0;
   vector_array_t stateTrajectory(2, vector_t::Zero(observation.state.size()));    //期望轨迹中状态变量的高度项取参考高度
@@ -108,6 +108,7 @@ TargetTrajectories cmdVelToTargetTrajectories(const vector_t& cmdVel, const Syst
     cmdVelRot(0) = 0;
   else if (fabs(cmdVelRot(1)) < 0.06)
     cmdVelRot(1) = 0;
+  cmdVelRot(2) = 0;
   const vector_t targetPose = [&]() {
     vector_t target(6);
     target(0) = currentPose(0) + cmdVelRot(0) * timeToTarget;

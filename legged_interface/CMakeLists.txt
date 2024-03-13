@@ -64,6 +64,7 @@ add_library(${PROJECT_NAME} SHARED
         src/constraint/ZeroForceConstraint.cpp
         src/constraint/NormalVelocityConstraintCppAd.cpp
         src/constraint/ZeroVelocityConstraintCppAd.cpp
+        src/constraint/PrismaticJointConstraint.cpp
         src/foot_planner/CubicSpline.cpp
         src/foot_planner/MultiCubicSpline.cpp
         src/foot_planner/SplineCpg.cpp

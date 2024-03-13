@@ -55,7 +55,6 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   setupLeggedInterface(taskFile, urdfFile, referenceFile, verbose);
   setupMpc();
   setupMrt();
-  std::cout<<"-------------robot_name_:"<<robot_name_<<std::endl;
   // Visualization
   ros::NodeHandle nh;
   CentroidalModelPinocchioMapping pinocchioMapping(leggedInterface_->getCentroidalModelInfo());
@@ -68,7 +67,8 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
 
   rbdConversions_ = std::make_shared<CentroidalModelRbdConversions>(leggedInterface_->getPinocchioInterface(),
                                                                     leggedInterface_->getCentroidalModelInfo());
-
+  robotVisualizer_->setRobotName(robot_name_);
+ // leggedInterface_->setRobotName(robot_name_);
   // Hardware interface
   auto* hybridJointInterface = robot_hw->get<HybridJointInterface>();
 
@@ -176,16 +176,16 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   if(robot_name_=="bipedv5"){ //平移关节的期望角度设成一致
     double lp = (optimizedState(14)+optimizedState(16))/2.0;
     double rp = (optimizedState(20)+optimizedState(22))/2.0;
-    //std::cout<<"MPC, lp 1:"<<optimizedState(14)<<", lp 2:"<<optimizedState(16)<<", lp:"<<lp<<std::endl;
-   // std::cout<<"MPC, rp 1:"<<optimizedState(20)<<", rp 2:"<<optimizedState(22)<<", rp:"<<rp<<std::endl;
+    std::cout<<"MPC, lp 1:"<<optimizedState(14)<<", lp 2:"<<optimizedState(16)<<", lp:"<<lp<<std::endl;
+   std::cout<<"MPC, rp 1:"<<optimizedState(20)<<", rp 2:"<<optimizedState(22)<<", rp:"<<rp<<std::endl;
     optimizedState(14) = lp;
     optimizedState(16) = lp;
     optimizedState(20) = rp;
     optimizedState(22) = rp;
     double lpv = (optimizedInput(14)+optimizedInput(16))/2.0;
     double rpv = (optimizedInput(20)+optimizedInput(22))/2.0;
- //   std::cout<<"MPC, lpv 1:"<<optimizedInput(14)<<", lpv 2:"<<optimizedInput(16)<<", lpv:"<<lpv<<std::endl;
-  //  std::cout<<"MPC, rpv 1:"<<optimizedInput(20)<<", rpv 2:"<<optimizedInput(22)<<", rpv:"<<rpv<<std::endl;
+   std::cout<<"MPC, lpv 1:"<<optimizedInput(14)<<", lpv 2:"<<optimizedInput(16)<<", lpv:"<<lpv<<std::endl;
+   std::cout<<"MPC, rpv 1:"<<optimizedInput(20)<<", rpv 2:"<<optimizedInput(22)<<", rpv:"<<rpv<<std::endl;
     optimizedInput(14) = lpv;
     optimizedInput(16) = lpv;
     optimizedInput(20) = rpv;

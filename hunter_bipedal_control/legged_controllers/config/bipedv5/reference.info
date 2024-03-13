@@ -1,8 +1,8 @@
 targetDisplacementVelocity          0.3;
-targetRotationVelocity              0.5;
+targetRotationVelocity              0.5; 
 
 
-baseHeight                           0.833422
+baseHeight                           0.833
 
 defaultJointState
 {
@@ -59,8 +59,8 @@ TrotTemplate
   {
     [0]  0.0
     [1]  0.3
-    [2]  0.32
-    [3]  0.62
-    [4]  0.64
+    [2]  0.4
+    [3]  0.7
+    [4]  0.8
   }
 }
