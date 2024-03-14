@@ -47,8 +47,14 @@ namespace legged_robot
 {
 template <typename T>
 using feet_array_t = std::array<T, 4>;
+template <typename T>
+using feet_vector_t = std::vector<T>;
+template <typename T>
+using feet_array_t8 = std::array<T, 8>;
 
 using contact_flag_t = feet_array_t<bool>;
+using contact_flag_t8 = feet_array_t8<bool>;
+using contact_flag_v = feet_vector_t<bool>;
 
 using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
 using vector5_t = Eigen::Matrix<scalar_t, 5, 1>;

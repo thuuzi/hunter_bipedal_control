@@ -70,7 +70,7 @@ XYLimitConstraint::XYLimitConstraint(const XYLimitConstraint& rhs)
 /******************************************************************************************************/
 bool XYLimitConstraint::isActive(scalar_t time) const
 {
-  return !referenceManagerPtr_->getContactFlags(time)[contactPointIndex_];
+  return !referenceManagerPtr_->getContactFlags(time,referenceManagerPtr_->getContactNum())[contactPointIndex_];
 }
 
 /******************************************************************************************************/

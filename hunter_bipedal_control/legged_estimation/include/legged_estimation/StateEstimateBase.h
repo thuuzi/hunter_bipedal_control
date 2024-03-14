@@ -40,7 +40,7 @@ public:
   StateEstimateBase(PinocchioInterface pinocchioInterface, CentroidalModelInfo info,
                     const PinocchioEndEffectorKinematics& eeKinematics);
   virtual void updateJointStates(const vector_t& jointPos, const vector_t& jointVel);
-  virtual void updateContact(contact_flag_t contactFlag)
+  virtual void updateContact(contact_flag_v contactFlag)
   {
     contactFlag_ = contactFlag;
   }
@@ -55,7 +55,7 @@ public:
     return stanceLeg2ModeNumber(contactFlag_);
   }
 
-  feet_array_t<vector3_t>& getLatestStancePos()
+  feet_vector_t<vector3_t>& getLatestStancePos()
   {
     return latestStanceposition_;
   }
@@ -68,11 +68,11 @@ public:
     return std::move(body_vel);
   }
 
-  void setStartStopTime4Legs(const feet_array_t<std::array<scalar_t, 2>>& start_stop_time_4_legs)
+  void setStartStopTime4Legs(const feet_vector_t<std::array<scalar_t, 2>>& start_stop_time_4_legs)
   {
     StartStopTime4Legs_ = start_stop_time_4_legs;
   }
-  void updateCmdContact(contact_flag_t cmd_contact_flag)
+  void updateCmdContact(contact_flag_v cmd_contact_flag)
   {
     cmdContactflag_ = std::move(cmd_contact_flag);
   }
@@ -81,7 +81,7 @@ public:
     cmdTorque_ = cmd_torque;
   }
   void estContactForce(const ros::Duration& period);
-  contact_flag_t estContactState(const scalar_t& time);
+  contact_flag_v estContactState(const scalar_t& time);
   void loadSettings(const std::string& taskFile, bool verbose);
 
   const vector_t& getEstContactForce()
@@ -93,7 +93,7 @@ public:
     return estDisturbancetorque_;
   }
 
-  const std::array<contact_flag_t, 2>& getEarlyLateContact()
+  const std::array<contact_flag_v, 2>& getEarlyLateContact()
   {
     return earlyLatecontact_;
   }
@@ -111,7 +111,7 @@ protected:
 
   vector3_t zyxOffset_ = vector3_t::Zero();
   vector_t rbdState_;
-  contact_flag_t contactFlag_{};
+  contact_flag_v contactFlag_{};
   Eigen::Quaternion<scalar_t> quat_;
   vector3_t angularVelLocal_, linearAccelLocal_;
   matrix3_t orientationCovariance_, angularVelCovariance_, linearAccelCovariance_;
@@ -120,7 +120,7 @@ protected:
   std::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::PoseWithCovarianceStamped>> posePub_;
   ros::Time lastPub_;
 
-  feet_array_t<vector3_t> latestStanceposition_;
+  feet_vector_t<vector3_t> latestStanceposition_;
 
   vector_t pSCgZinvlast_;
   vector_t vMeasuredLast_;
@@ -130,12 +130,12 @@ protected:
 
   scalar_t cutoffFrequency_ = 150;
   scalar_t contactThreshold_ = 23;
-  contact_flag_t cmdContactflag_{};
-  feet_array_t<std::array<scalar_t, 2>> StartStopTime4Legs_;
+  contact_flag_v cmdContactflag_{};
+  feet_vector_t<std::array<scalar_t, 2>> StartStopTime4Legs_;
 
-  std::array<contact_flag_t, 2> earlyLatecontact_;
+  std::array<contact_flag_v, 2> earlyLatecontact_;
   std_msgs::Float64MultiArray earlyLateContactMsg_;
-  std::deque<std::pair<scalar_t, contact_flag_t>> estConHistory_;
+  std::deque<std::pair<scalar_t, contact_flag_v>> estConHistory_;
 };
 
 template <typename T>

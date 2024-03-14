@@ -24,11 +24,11 @@ namespace legged
 {
 using namespace legged_robot;
 
-feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& phaseIDsStock)
+feet_vector_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& phaseIDsStock)
 {
   const size_t numPhases = phaseIDsStock.size();
 
-  feet_array_t<std::vector<bool>> contactFlagStock;
+  feet_vector_t<std::vector<bool>> contactFlagStock;
   std::fill(contactFlagStock.begin(), contactFlagStock.end(), std::vector<bool>(numPhases));
 
   for (size_t i = 0; i < numPhases; i++)
@@ -205,9 +205,9 @@ void StateEstimateBase::estContactForce(const ros::Duration& period)
   }
 }
 
-contact_flag_t StateEstimateBase::estContactState(const scalar_t& time)
+contact_flag_v StateEstimateBase::estContactState(const scalar_t& time)
 {
-  contact_flag_t contact_state = cmdContactflag_;
+  contact_flag_v contact_state = cmdContactflag_;
   for (int i = 0; i < info_.numThreeDofContacts; i++)
   {
     const auto start_time = StartStopTime4Legs_[i].front();
@@ -298,7 +298,7 @@ void StateEstimateBase::lateContactDetection(const ModeSchedule& modeSchedule, s
   auto& eventTimes = modeSchedule.eventTimes;
   auto con_seq = extractContactFlags(modeSequence);
 
-  estConHistory_.push_front(std::pair<scalar_t, contact_flag_t>{ current_time, contactFlag_ });
+  estConHistory_.push_front(std::pair<scalar_t, contact_flag_v>{ current_time, contactFlag_ });
   if (estConHistory_.size() > 10)
     estConHistory_.pop_back();
 
@@ -327,7 +327,7 @@ void StateEstimateBase::lateContactDetection(const ModeSchedule& modeSchedule, s
   // check stance leg first, and only delay once
   bool delayed_flag = false;
   // leg whether need to swing down
-  feet_array_t<bool> leg_swing_down_flags{ false, false };
+  feet_vector_t<bool> leg_swing_down_flags{ false, false };
   for (auto leg : stance_legs)  // for cmd stance leg
   {
     // find stance start time

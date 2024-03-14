@@ -69,21 +69,18 @@ public:
     scalar_t feet_bias_h = 0;
     scalar_t next_position_z = 0.02;
     scalar_t forwardx = 1.0;
+    scalar_t contactNum = 4;
   };
 
   SwingTrajectoryPlanner(Config config);
 
   void update(const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories, scalar_t initTime);
 
-  void setFeetBias(const feet_array_t<vector3_t>& feet_bias)
+  void setFeetBias(const feet_vector_t<vector3_t>& feet_bias)
   {
     feet_bias_ = feet_bias;
   }
-  void setLegSwingDownFlags(const feet_array_t<bool>& leg_swing_down_flags, scalar_t delayed_time)
-  {
-    leg_swing_down_flags_ = leg_swing_down_flags;
-    delayed_time_ = delayed_time;
-  }
+
   void setBodyVelWorld(vector_t body_vel)
   {
     body_vel_world_buf_.setBuffer(body_vel);
@@ -96,13 +93,14 @@ public:
   {
     gaitLevel_ = gait_level;
   }
-  void setCurrentFeetPosition(const feet_array_t<vector3_t>& current_feet_position)
+  void setCurrentFeetPosition(const feet_vector_t<vector3_t>& current_feet_position)
   {
     current_feet_position_buf_.setBuffer(current_feet_position);
   }
   void setCurrentFeetPosition(const vector_t& current_feet_position)
   {
-    feet_array_t<vector3_t> feet_pos;
+    feet_vector_t<vector3_t> feet_pos;
+    feet_pos.resize(numFeet_);
     for (int i = 0; i < numFeet_; i++)
       feet_pos[i] = current_feet_position.segment<3>(3 * i);
     current_feet_position_buf_.setBuffer(feet_pos);
@@ -123,17 +121,16 @@ public:
   scalar_t getZpositionConstraint(size_t leg, scalar_t time) const;
 
   std::array<scalar_t, 2> getSwingStartStopTime(size_t leg, scalar_t time) const;
-  feet_array_t<std::array<scalar_t, 2>> threadSaftyGetStartStopTime(scalar_t time);
+  feet_vector_t<std::array<scalar_t, 2>> threadSaftyGetStartStopTime(scalar_t time);
 
-  feet_array_t<std::array<vector_t, 6>> threadSaftyGetPosVel(const vector_t& time_sample);
+  feet_vector_t<std::array<vector_t, 6>> threadSaftyGetPosVel(const vector_t& time_sample);
 
   /**
    * Extracts for each leg the contact sequence over the motion phase sequence.
    * @param phaseIDsStock
    * @return contactFlagStock
    */
-  feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& phaseIDsStock) const;
-
+  feet_vector_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& phaseIDsStock) const;
 private:
   vector3_t calNextFootPos(int feet, scalar_t current_time, scalar_t stop_time, scalar_t next_middle_time,
                            const vector_t& next_middle_body_pos, const vector_t& current_body_pos,
@@ -187,22 +184,21 @@ private:
   const Config config_;
   size_t numFeet_;
 
-  feet_array_t<std::vector<MultiCubicSpline>> feetXTrajs_;
-  feet_array_t<std::vector<MultiCubicSpline>> feetYTrajs_;
-  feet_array_t<std::vector<MultiCubicSpline>> feetZTrajs_;
+  feet_vector_t<std::vector<MultiCubicSpline>> feetXTrajs_;
+  feet_vector_t<std::vector<MultiCubicSpline>> feetYTrajs_;
+  feet_vector_t<std::vector<MultiCubicSpline>> feetZTrajs_;
 
-  BufferedValue<feet_array_t<std::vector<MultiCubicSpline>>> feetXTrajsBuf_;
-  BufferedValue<feet_array_t<std::vector<MultiCubicSpline>>> feetYTrajsBuf_;
-  BufferedValue<feet_array_t<std::vector<MultiCubicSpline>>> feetZTrajsBuf_;
+  BufferedValue<feet_vector_t<std::vector<MultiCubicSpline>>> feetXTrajsBuf_;
+  BufferedValue<feet_vector_t<std::vector<MultiCubicSpline>>> feetYTrajsBuf_;
+  BufferedValue<feet_vector_t<std::vector<MultiCubicSpline>>> feetZTrajsBuf_;
   BufferedValue<std::vector<scalar_t>> footTrajsEventsBuf_;
-  BufferedValue<feet_array_t<std::vector<std::array<scalar_t, 2>>>> StartStopTimeBuf_;
+  BufferedValue<feet_vector_t<std::vector<std::array<scalar_t, 2>>>> StartStopTimeBuf_;
 
-  feet_array_t<std::vector<scalar_t>> feetTrajsEvents_;
-  feet_array_t<std::vector<std::array<scalar_t, 2>>> startStopTime_;
-  feet_array_t<vector3_t> feet_bias_;
+  feet_vector_t<std::vector<scalar_t>> feetTrajsEvents_;
+  feet_vector_t<std::vector<std::array<scalar_t, 2>>> startStopTime_;
+  feet_vector_t<vector3_t> feet_bias_;
 
-  feet_array_t<bool> leg_swing_down_flags_;
-  scalar_t delayed_time_{ 0 };
+
   BufferedValue<vector_t> body_vel_world_buf_;
 
   vector_t body_vel_cmd_;
@@ -211,12 +207,12 @@ private:
   BufferedValue<vector3_t> swing_cmd_buf_;
   int gaitLevel_ = 0;
 
-  BufferedValue<feet_array_t<vector3_t>> current_feet_position_buf_;
+  BufferedValue<feet_vector_t<vector3_t>> current_feet_position_buf_;
 
-  feet_array_t<vector3_t> latestStanceposition_;
+  feet_vector_t<vector3_t> latestStanceposition_;
 
   // std::unique_ptr<dynamic_reconfigure::Server<legged_interface::SwingTrajectoryPlannerConfig>> serverPtr_;
-  feet_array_t<std::vector<bool>> eesContactFlagStocks_;
+  feet_vector_t<std::vector<bool>> eesContactFlagStocks_;
 };
 
 SwingTrajectoryPlanner::Config loadSwingTrajectorySettings(const std::string& fileName,

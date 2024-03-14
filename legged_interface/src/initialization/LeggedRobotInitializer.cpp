@@ -67,7 +67,7 @@ LeggedRobotInitializer* LeggedRobotInitializer::clone() const
 void LeggedRobotInitializer::compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input,
                                      vector_t& nextState)
 {
-  const auto contactFlags = referenceManagerPtr_->getContactFlags(time);
+  const auto contactFlags = referenceManagerPtr_->getContactFlags(time,info_.numThreeDofContacts);
   input = weightCompensatingInput(info_, contactFlags);
   nextState = state;
   if (!extendNormalizedMomentum_)

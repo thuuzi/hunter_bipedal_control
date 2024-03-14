@@ -132,6 +132,11 @@ contact_flag_t SwitchedModelReferenceManager::getContactFlags(scalar_t time) con
   return modeNumber2StanceLeg(this->getModeSchedule().modeAtTime(time));
 }
 
+contact_flag_v SwitchedModelReferenceManager::getContactFlags(scalar_t time,scalar_t cNum) const
+{
+  return modeNumber2StanceLeg(this->getModeSchedule().modeAtTime(time),cNum);
+}
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 //在referenceManager中的preSolverRun（）被调用，输入是接收mpc_target话题更新后的targetTrajectories，modeSchedule于本函数内生成
@@ -152,7 +157,6 @@ void SwitchedModelReferenceManager::modifyReferences(scalar_t initTime, scalar_t
   const auto& est_con = estContactFlagBuffer_.get();  //状态估计获得的接触状态，无用
 
   calculateVelAbs(targetTrajectories);    //获取过去一段时间平均速度VelAvg_
-
   if (gaitType_ == 0)   //gaitType默认为0，目前/gait_type话题无消息
   {
     walkGait(body_height, initTime, finalTime, modeSchedule);
@@ -161,10 +165,10 @@ void SwitchedModelReferenceManager::modifyReferences(scalar_t initTime, scalar_t
   {
     trotGait(body_height, initTime, finalTime);
   }
-
   swingTrajectoryPtr_->setGaitLevel(gaitLevel_);
   swingTrajectoryPtr_->setBodyVelCmd(velCmdInBuf_.get());
   swingTrajectoryPtr_->setCurrentFeetPosition(inverseKinematics_.computeFootPos(initState));
+  
   swingTrajectoryPtr_->update(modeSchedule, targetTrajectories, initTime);
  // std::cout<<"mode times:";
 //  for(int i = 0; i< modeSchedule.eventTimes.size();i++){

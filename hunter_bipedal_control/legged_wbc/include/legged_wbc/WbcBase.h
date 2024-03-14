@@ -108,7 +108,7 @@ protected:
   vector_t qMeasured_, vMeasured_, inputLast_;
   matrix_t j_, dj_;
   Matrix6x base_j_, base_dj_;
-  contact_flag_t contactFlag_{};
+  contact_flag_v contactFlag_{};
   size_t numContacts_{};
 
   vector_t torqueLimits_;

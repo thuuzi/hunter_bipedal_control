@@ -60,29 +60,45 @@ namespace legged_robot
 SwingTrajectoryPlanner::SwingTrajectoryPlanner(Config config)
   : config_(std::move(config))
   , feet_bias_{}
-  , leg_swing_down_flags_{}
-  , feetXTrajsBuf_{ std::move(feet_array_t<std::vector<MultiCubicSpline>>{}) }
-  , feetYTrajsBuf_{ std::move(feet_array_t<std::vector<MultiCubicSpline>>{}) }
-  , feetZTrajsBuf_{ std::move(feet_array_t<std::vector<MultiCubicSpline>>{}) }
+  , feetXTrajsBuf_{ std::move(feet_vector_t<std::vector<MultiCubicSpline>>{}) }
+  , feetYTrajsBuf_{ std::move(feet_vector_t<std::vector<MultiCubicSpline>>{}) }
+  , feetZTrajsBuf_{ std::move(feet_vector_t<std::vector<MultiCubicSpline>>{}) }
   , footTrajsEventsBuf_{ std::move(std::vector<scalar_t>{}) }
-  , StartStopTimeBuf_{ std::move(feet_array_t<std::vector<std::array<scalar_t, 2>>>{}) }
+  , StartStopTimeBuf_{ std::move(feet_vector_t<std::vector<std::array<scalar_t, 2>>>{}) }
   , body_vel_world_buf_{ std::move(vector_t(6)) }
   , swing_cmd_buf_{ std::move(vector3_t(0, 0, 0)) }
-  , current_feet_position_buf_{ std::move(feet_array_t<vector3_t>{}) }
+  , current_feet_position_buf_{ std::move(feet_vector_t<vector3_t>{}) }
   , latestStanceposition_{}
 {
-  numFeet_ = feet_bias_.size();
-  if(config.forwardx > 0.0){
-    feet_bias_[0] << config.feet_bias_l1, config.feet_bias_w, config.feet_bias_h;
-    feet_bias_[1] << config.feet_bias_l1, -config.feet_bias_w, config.feet_bias_h;
-    feet_bias_[2] << config.feet_bias_l2, config.feet_bias_w, config.feet_bias_h;
-    feet_bias_[3] << config.feet_bias_l2, -config.feet_bias_w, config.feet_bias_h;
-  }else{
-    feet_bias_[0] << config.feet_bias_w, config.feet_bias_l1, config.feet_bias_h;
-    feet_bias_[1] << -config.feet_bias_w, config.feet_bias_l1, config.feet_bias_h;
-    feet_bias_[2] << config.feet_bias_w, config.feet_bias_l2, config.feet_bias_h;
-    feet_bias_[3] << -config.feet_bias_w, config.feet_bias_l2, config.feet_bias_h;
-  }
+  numFeet_ = config.contactNum;
+  feetXTrajs_.resize(numFeet_);
+  feetYTrajs_.resize(numFeet_);
+  feetZTrajs_.resize(numFeet_);
+  startStopTime_.resize(numFeet_);
+  feetTrajsEvents_.resize(numFeet_);
+  latestStanceposition_.resize(numFeet_);
+  if(numFeet_==4){
+    if(config.forwardx > 0.0){
+      feet_bias_.push_back(vector3_t(config.feet_bias_l1, config.feet_bias_w, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(config.feet_bias_l1, -config.feet_bias_w, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(config.feet_bias_l2, config.feet_bias_w, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(config.feet_bias_l2, -config.feet_bias_w, config.feet_bias_h));
+    }else{
+      feet_bias_.push_back(vector3_t(config.feet_bias_w, config.feet_bias_l1, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(-config.feet_bias_w, config.feet_bias_l1, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(config.feet_bias_w, config.feet_bias_l2, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(-config.feet_bias_w, config.feet_bias_l2, config.feet_bias_h));
+    }
+  }else if(numFeet_==8){
+      feet_bias_.push_back(vector3_t(config.feet_bias_w - 0.07, config.feet_bias_l1, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(config.feet_bias_w + 0.07, config.feet_bias_l1, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(config.feet_bias_w +0.07, config.feet_bias_l2, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(config.feet_bias_w -0.07, config.feet_bias_l2, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(-config.feet_bias_w -0.07, config.feet_bias_l1, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(-config.feet_bias_w +0.07 , config.feet_bias_l1, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(-config.feet_bias_w +0.07, config.feet_bias_l2, config.feet_bias_h));
+      feet_bias_.push_back(vector3_t(-config.feet_bias_w -0.07, config.feet_bias_l2, config.feet_bias_h));
+  } 
   body_vel_cmd_.resize(6);
   body_vel_cmd_.setZero();
 
@@ -174,39 +190,44 @@ void SwingTrajectoryPlanner::update(const ModeSchedule& modeSchedule, const Targ
   body_vel_world_buf_.updateFromBuffer();
   const auto& body_vel_world = body_vel_world_buf_.get();
   current_feet_position_buf_.updateFromBuffer();
-  const auto& current_feet_position = current_feet_position_buf_.get();
-  contact_flag_t cmd_state_leg = modeNumber2StanceLeg(modeSchedule.modeAtTime(initTime + 0.001));
+  auto& current_feet_position = current_feet_position_buf_.get();
+  std::cout<<"=============== current_feet_position.size():"<<current_feet_position.size()<<std::endl;
+  if(current_feet_position.size() == 0)
+    current_feet_position.resize(numFeet_);
+  contact_flag_v cmd_state_leg = modeNumber2StanceLeg(modeSchedule.modeAtTime(initTime + 0.001),numFeet_);
 
   for (int i = 0; i < numFeet_; i++)
   {
     latestStanceposition_[i] = cmd_state_leg[i] ? current_feet_position[i] : latestStanceposition_[i];
     latestStanceposition_[i].z() = config_.next_position_z;
   }
-
-  feet_array_t<vector3_t> last_stance_position = latestStanceposition_;
-  feet_array_t<vector3_t> next_stance_position = latestStanceposition_;
-  feet_array_t<int> last_final_idx{};
+  feet_vector_t<vector3_t> last_stance_position = latestStanceposition_;
+  feet_vector_t<vector3_t> next_stance_position = latestStanceposition_;
+  feet_vector_t<int> last_final_idx(numFeet_);
 
   const auto eesContactFlagStocks = extractContactFlags(modeSequence);
   eesContactFlagStocks_ = eesContactFlagStocks;
 
-  feet_array_t<std::vector<int>> startTimesIndices;
-  feet_array_t<std::vector<int>> finalTimesIndices;
+  feet_vector_t<std::vector<int>> startTimesIndices(numFeet_);
+  feet_vector_t<std::vector<int>> finalTimesIndices(numFeet_);
   for (size_t leg = 0; leg < numFeet_; leg++)
   {
     std::tie(startTimesIndices[leg], finalTimesIndices[leg]) = updateFootSchedule(eesContactFlagStocks[leg]);
   }
   for (size_t j = 0; j < numFeet_; j++)
   {
-    feetXTrajs_[j].clear();
-    feetYTrajs_[j].clear();
-    feetZTrajs_[j].clear();
-    startStopTime_[j].clear();
+    if(feetXTrajs_[j].size()>0)
+      feetXTrajs_[j].clear();
+    if(feetYTrajs_[j].size()>0)
+      feetYTrajs_[j].clear();
+    if(feetZTrajs_[j].size()>0)
+      feetZTrajs_[j].clear();
+    if(startStopTime_[j].size()>0)
+      startStopTime_[j].clear();
     feetXTrajs_[j].reserve(modeSequence.size());
     feetYTrajs_[j].reserve(modeSequence.size());
     feetZTrajs_[j].reserve(modeSequence.size());
     startStopTime_[j].reserve(modeSequence.size());
-
 
     for (int p = 0; p < modeSequence.size(); ++p)
     {
@@ -382,17 +403,18 @@ SwingTrajectoryPlanner::updateFootSchedule(const std::vector<bool>& contactFlagS
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-feet_array_t<std::vector<bool>>
+feet_vector_t<std::vector<bool>>
 SwingTrajectoryPlanner::extractContactFlags(const std::vector<size_t>& phaseIDsStock) const
 {
   const size_t numPhases = phaseIDsStock.size();
 
-  feet_array_t<std::vector<bool>> contactFlagStock;
-  std::fill(contactFlagStock.begin(), contactFlagStock.end(), std::vector<bool>(numPhases));
-
+  feet_vector_t<std::vector<bool>> contactFlagStock;
+  for(int i=0;i<numFeet_;i++){
+    contactFlagStock.push_back(std::vector<bool>(numPhases));
+  }
   for (size_t i = 0; i < numPhases; i++)
   {
-    const auto contactFlag = modeNumber2StanceLeg(phaseIDsStock[i]);
+    const auto contactFlag = modeNumber2StanceLeg(phaseIDsStock[i],numFeet_);
     for (size_t j = 0; j < numFeet_; j++)
     {
       contactFlagStock[j][i] = contactFlag[j];
@@ -469,20 +491,25 @@ void SwingTrajectoryPlanner::checkThatIndicesAreValid(int leg, int index, int st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-feet_array_t<std::array<vector_t, 6>> SwingTrajectoryPlanner::threadSaftyGetPosVel(const vector_t& time_sample)
+feet_vector_t<std::array<vector_t, 6>> SwingTrajectoryPlanner::threadSaftyGetPosVel(const vector_t& time_sample)
 {
   feetXTrajsBuf_.updateFromBuffer();
   feetYTrajsBuf_.updateFromBuffer();
   feetZTrajsBuf_.updateFromBuffer();
   footTrajsEventsBuf_.updateFromBuffer();
-  const auto& Xs = feetXTrajsBuf_.get();
-  const auto& Ys = feetYTrajsBuf_.get();
-  const auto& Zs = feetZTrajsBuf_.get();
-  const auto& footTrajsEvents_ = footTrajsEventsBuf_.get();
-
+  auto& Xs = feetXTrajsBuf_.get();
+  auto& Ys = feetYTrajsBuf_.get();
+  auto& Zs = feetZTrajsBuf_.get();
+  auto& footTrajsEvents_ = footTrajsEventsBuf_.get();
+  if(Xs.size()==0)
+    Xs.resize(numFeet_);
+  if(Ys.size()==0)
+    Ys.resize(numFeet_);
+  if(Zs.size()==0)
+    Zs.resize(numFeet_);
   size_t sample_size = time_sample.size();
 
-  feet_array_t<std::array<vector_t, 6>> feet_pos_vel;
+  feet_vector_t<std::array<vector_t, 6>> feet_pos_vel(numFeet_);
   for (int leg = 0; leg < numFeet_; leg++)
   {
     for (int j = 0; j < feet_pos_vel[leg].size(); j++)
@@ -510,13 +537,17 @@ feet_array_t<std::array<vector_t, 6>> SwingTrajectoryPlanner::threadSaftyGetPosV
   return std::move(feet_pos_vel);
 }
 
-feet_array_t<std::array<scalar_t, 2>> SwingTrajectoryPlanner::threadSaftyGetStartStopTime(scalar_t time)
+feet_vector_t<std::array<scalar_t, 2>> SwingTrajectoryPlanner::threadSaftyGetStartStopTime(scalar_t time)
 {
-  feet_array_t<std::array<scalar_t, 2>> startStopTime4legs;
+  feet_vector_t<std::array<scalar_t, 2>> startStopTime4legs(numFeet_);
   StartStopTimeBuf_.updateFromBuffer();
   footTrajsEventsBuf_.updateFromBuffer();
-  const auto& Ts = StartStopTimeBuf_.get();
-  const auto& footTrajsEvents_ = footTrajsEventsBuf_.get();
+  auto& Ts = StartStopTimeBuf_.get();
+  auto& footTrajsEvents_ = footTrajsEventsBuf_.get();
+  if(Ts.size()==0)
+    Ts.resize(numFeet_);
+  if(footTrajsEvents_.size()==0)
+    footTrajsEvents_.resize(numFeet_);
   auto index = lookup::findIndexInTimeArray(footTrajsEvents_, time);
   index = std::min((int)(footTrajsEvents_.size() - 1), index);
   for (int leg = 0; leg < numFeet_; leg++)
@@ -530,7 +561,6 @@ feet_array_t<std::array<scalar_t, 2>> SwingTrajectoryPlanner::threadSaftyGetStar
       startStopTime4legs[leg] = std::array<scalar_t, 2>{ time, time };
     }
   }
-
   return std::move(startStopTime4legs);
 }
 
@@ -562,6 +592,7 @@ SwingTrajectoryPlanner::Config loadSwingTrajectorySettings(const std::string& fi
   loadData::loadPtreeValue(pt, config.feet_bias_h, prefix + "feet_bias_h", verbose);
   loadData::loadPtreeValue(pt, config.next_position_z, prefix + "next_position_z", verbose);
   loadData::loadPtreeValue(pt, config.forwardx, prefix + "forwardx", verbose);
+  loadData::loadPtreeValue(pt, config.contactNum, prefix + "contactNum", verbose);
   if (verbose)
   {
     std::cerr << " #### =============================================================================" << std::endl;

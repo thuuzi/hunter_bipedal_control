@@ -51,7 +51,7 @@ WbcBase::WbcBase(const PinocchioInterface& pinocchioInterface, CentroidalModelIn
 vector_t WbcBase::update(const vector_t& stateDesired, const vector_t& inputDesired, const vector_t& rbdStateMeasured,
                          size_t mode, scalar_t /*period*/)
 {
-  contactFlag_ = modeNumber2StanceLeg(mode);
+  contactFlag_ = modeNumber2StanceLeg(mode,info_.numThreeDofContacts);
   numContacts_ = 0;
   for (bool flag : contactFlag_)
   {

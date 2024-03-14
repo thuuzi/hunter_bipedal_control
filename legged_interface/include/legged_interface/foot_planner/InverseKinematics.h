@@ -35,7 +35,7 @@ public:
 
   vector5_t computeDIK(vector_t q, int leg, vector3_t foot_linear_vel, vector3_t foot_angular_vel);
 
-  feet_array_t<vector3_t> computeFootPos(const vector_t& state);
+  feet_vector_t<vector3_t> computeFootPos(const vector_t& state);
 
   static int leg2index(int leg)
   {

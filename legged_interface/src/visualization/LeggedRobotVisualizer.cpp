@@ -170,7 +170,9 @@ void LeggedRobotVisualizer::update(const SystemObservation& observation, const P
 
     ros::Time timeStamp(observation.time);
     publishObservation(timeStamp, observation);
+    std::cout<<"publishObservation "<<std::endl;
     publishDesiredTrajectory(timeStamp, command.mpcTargetTrajectories_, swingTrajectoryPlanner);
+     std::cout<<"publitttdasfds--------------------"<<std::endl;
     publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_,
                                     primalSolution.modeSchedule_);
     lastTime_ = observation.time;
@@ -213,7 +215,8 @@ void LeggedRobotVisualizer::publishObservation(const ros::Time& timeStamp, const
   // Publish
   publishJointTransforms(timeStamp, qJoints);
   publishBaseTransform(timeStamp, basePose);
-  publishCartesianMarkers(timeStamp, modeNumber2StanceLeg(observation.mode), feetPositions, feetForces);
+  publishCartesianMarkers(timeStamp, modeNumber2StanceLeg(observation.mode,centroidalModelInfo_.numThreeDofContacts), feetPositions, feetForces);
+
 }
 
 /******************************************************************************************************/
@@ -245,7 +248,7 @@ void LeggedRobotVisualizer::publishJointTransforms(const ros::Time& timeStamp, c
   if (robotStatePublisherPtr_ != nullptr)
   {
 
-    if(robot_name_=="bipedv5"){
+    if(robot_name_=="bipedv5" || robot_name_ =="bipedv5_4c"){
       std::map<std::string, scalar_t> jointPositions{
       { "ly", jointAngles[0] }, { "lh", jointAngles[1] }, { "lkp", jointAngles[2] },
       { "lk", jointAngles[3] }, { "lap", jointAngles[4] }, { "la", jointAngles[5] },
@@ -342,6 +345,41 @@ void LeggedRobotVisualizer::publishCartesianMarkers(const ros::Time& timeStamp, 
   currentStatePublisher_.publish(markerArray);
 }
 
+void LeggedRobotVisualizer::publishCartesianMarkers(const ros::Time& timeStamp, const contact_flag_v& contactFlags,
+                                                    const std::vector<vector3_t>& feetPositions,
+                                                    const std::vector<vector3_t>& feetForces) const
+{
+  // Reserve message
+  const size_t numberOfCartesianMarkers = 10;
+  visualization_msgs::MarkerArray markerArray;
+  markerArray.markers.reserve(numberOfCartesianMarkers);
+
+  // Feet positions and Forces
+  for (size_t i = 0; i < centroidalModelInfo_.numThreeDofContacts; ++i)
+  {
+    markerArray.markers.emplace_back(
+        getFootMarker(feetPositions[i], contactFlags[i], feetColorMap_[i], footMarkerDiameter_, footAlphaWhenLifted_));
+    markerArray.markers.emplace_back(
+        getForceMarker(feetForces[i], feetPositions[i], contactFlags[i], Color::green, forceScale_));
+  }
+
+  // Center of pressure
+  markerArray.markers.emplace_back(getCenterOfPressureMarker(feetForces.begin(), feetForces.end(),
+                                                             feetPositions.begin(), contactFlags.begin(), Color::green,
+                                                             copMarkerDiameter_));
+
+  // Support polygon
+  markerArray.markers.emplace_back(getSupportPolygonMarker(
+      feetPositions.begin(), feetPositions.end(), contactFlags.begin(), Color::black, supportPolygonLineWidth_));
+
+  // Give markers an id and a frame
+  assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg(frameId_, timeStamp));
+  assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
+
+  // Publish cartesian markers (minus the CoM Pose)
+  currentStatePublisher_.publish(markerArray);
+}
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -364,11 +402,12 @@ void LeggedRobotVisualizer::publishDesiredTrajectory(
   const auto& feet_pos_vel = swingTrajectoryPlanner->threadSaftyGetPosVel(time_sample);
 
   // Reserve feet swing messages
-  feet_array_t<std::vector<geometry_msgs::Point>> desiredFeetSwingPositionMsgs;
+  feet_vector_t<std::vector<geometry_msgs::Point>> desiredFeetSwingPositionMsgs;
+  desiredFeetSwingPositionMsgs.resize(centroidalModelInfo_.numThreeDofContacts);
   std_msgs::Float64MultiArray swing_msgs;
   swing_msgs.data.resize(7);
 
-  for (int leg = 0; leg < 4; leg++)
+  for (int leg = 0; leg < centroidalModelInfo_.numThreeDofContacts; leg++)
   {
     geometry_msgs::Pose footPose;
     desiredFeetSwingPositionMsgs[leg].reserve(sample_size);
@@ -393,7 +432,8 @@ void LeggedRobotVisualizer::publishDesiredTrajectory(
   desiredBasePositionMsg.reserve(stateTrajectory.size());
 
   // Reserve feet messages
-  feet_array_t<std::vector<geometry_msgs::Point>> desiredFeetPositionMsgs;
+  feet_vector_t<std::vector<geometry_msgs::Point>> desiredFeetPositionMsgs;
+  desiredFeetPositionMsgs.resize(centroidalModelInfo_.numThreeDofContacts);
   for (size_t i = 0; i < centroidalModelInfo_.numThreeDofContacts; i++)
   {
     desiredFeetPositionMsgs[i].reserve(stateTrajectory.size());
@@ -469,7 +509,8 @@ void LeggedRobotVisualizer::publishOptimizedStateTrajectory(const ros::Time& tim
   }
 
   // Reserve Feet msg
-  feet_array_t<std::vector<geometry_msgs::Point>> feetMsgs;
+  feet_vector_t<std::vector<geometry_msgs::Point>> feetMsgs;
+  feetMsgs.resize(centroidalModelInfo_.numThreeDofContacts);
   std::for_each(feetMsgs.begin(), feetMsgs.end(),
                 [&](std::vector<geometry_msgs::Point>& v) { v.reserve(mpcStateTrajectory.size()); });
 

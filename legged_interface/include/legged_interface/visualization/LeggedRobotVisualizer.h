@@ -115,7 +115,9 @@ private:
   void publishCartesianMarkers(const ros::Time& timeStamp, const contact_flag_t& contactFlags,
                                const std::vector<vector3_t>& feetPositions,
                                const std::vector<vector3_t>& feetForces) const;
-
+  void publishCartesianMarkers(const ros::Time& timeStamp, const contact_flag_v& contactFlags,
+                               const std::vector<vector3_t>& feetPositions,
+                               const std::vector<vector3_t>& feetForces) const;
   PinocchioInterface pinocchioInterface_;
   const CentroidalModelInfo centroidalModelInfo_;
   std::unique_ptr<PinocchioEndEffectorKinematics> endEffectorKinematicsPtr_;

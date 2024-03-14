@@ -72,14 +72,49 @@ inline contact_flag_t modeNumber2StanceLeg(const size_t& modeNumber)
     case 0:
       stanceLegs = contact_flag_t{ false, false, false, false };
       break;  // 0:
-    case 1:
+    case 1:// 1: 右腿支撑
       stanceLegs = contact_flag_t{ false, true, false, true };
-      break;  // 1: 右腿支撑
+      break;  
     case 2:
       stanceLegs = contact_flag_t{ true, false, true, false };
       break;  // 2:
     case 3:
       stanceLegs = contact_flag_t{ true, true, true, true };
+      break;  // 3:
+  }
+
+  return stanceLegs;
+}
+
+inline contact_flag_v modeNumber2StanceLeg(const size_t& modeNumber,const size_t& contactNum )
+{
+  contact_flag_v stanceLegs;
+
+  switch (modeNumber)
+  {
+    case 0:
+      if(contactNum == 4)
+        stanceLegs = { false, false, false, false };
+      else if(contactNum == 8)
+        stanceLegs = { false, false, false, false, false, false, false, false };
+      break;  // 0:
+    case 1:// 1: 右腿支撑
+      if(contactNum == 4)
+        stanceLegs = { false, true, false, true };
+      else if(contactNum == 8)
+        stanceLegs = { false, false, false, false, true, true, true, true };
+      break;  
+    case 2:
+      if(contactNum == 4)
+        stanceLegs = { true, false, true, false };
+      else if(contactNum == 8)
+        stanceLegs = { true, true, true, true , false, false, false, false};
+      break;  // 2:
+    case 3:
+      if(contactNum == 4)
+        stanceLegs = { true, true, true, true };
+      else if(contactNum == 8)
+        stanceLegs = { false, false, false, false , false, false, false, false};
       break;  // 3:
   }
 
@@ -92,6 +127,14 @@ inline contact_flag_t modeNumber2StanceLeg(const size_t& modeNumber)
 inline size_t stanceLeg2ModeNumber(const contact_flag_t& stanceLegs)
 {
   return static_cast<size_t>(stanceLegs[1]) + 2 * static_cast<size_t>(stanceLegs[0]);
+}
+
+inline size_t stanceLeg2ModeNumber(const contact_flag_v& stanceLegs)
+{
+  if(stanceLegs.size()==8)
+    return static_cast<size_t>(stanceLegs[5]) + 2 * static_cast<size_t>(stanceLegs[0]);
+  else 
+    return static_cast<size_t>(stanceLegs[1]) + 2 * static_cast<size_t>(stanceLegs[0]);
 }
 
 /******************************************************************************************************/

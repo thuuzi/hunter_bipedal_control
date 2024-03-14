@@ -70,7 +70,7 @@ NormalVelocityConstraintCppAd::NormalVelocityConstraintCppAd(const NormalVelocit
 /******************************************************************************************************/
 bool NormalVelocityConstraintCppAd::isActive(scalar_t time) const
 {
-  return !referenceManagerPtr_->getContactFlags(time)[contactPointIndex_];
+  return !referenceManagerPtr_->getContactFlags(time,referenceManagerPtr_->getContactNum())[contactPointIndex_];
 }
 
 /******************************************************************************************************/

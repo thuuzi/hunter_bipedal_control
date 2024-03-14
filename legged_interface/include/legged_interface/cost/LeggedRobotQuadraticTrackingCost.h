@@ -73,7 +73,7 @@ private:
   std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
                                                        const TargetTrajectories& targetTrajectories) const override
   {
-    const auto contactFlags = referenceManagerPtr_->getContactFlags(time);
+    const auto contactFlags = referenceManagerPtr_->getContactFlags(time,info_.numThreeDofContacts);
     const vector_t xNominal = targetTrajectories.getDesiredState(time);
     const vector_t uNominal = weightCompensatingInput(info_, contactFlags);
     return { state - xNominal, input - uNominal };
@@ -107,7 +107,7 @@ private:
   vector_t getStateDeviation(scalar_t time, const vector_t& state,
                              const TargetTrajectories& targetTrajectories) const override
   {
-    const auto contactFlags = referenceManagerPtr_->getContactFlags(time);
+    const auto contactFlags = referenceManagerPtr_->getContactFlags(time,info_.numThreeDofContacts);
     const vector_t xNominal = targetTrajectories.getDesiredState(time);
     return state - xNominal;
   }

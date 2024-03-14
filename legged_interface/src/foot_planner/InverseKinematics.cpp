@@ -250,19 +250,20 @@ vector5_t InverseKinematics::computeDIK(vector_t q, int leg, vector3_t foot_line
   return std::move(joint_vel);
 }
 
-feet_array_t<vector3_t> InverseKinematics::computeFootPos(const vector_t& state)
+feet_vector_t<vector3_t> InverseKinematics::computeFootPos(const vector_t& state)
 {
   const auto& model = pinocchio_interface_->getModel();
   auto& data = pinocchio_interface_->getData();
   const vector_t& init_q = state.tail(info_->generalizedCoordinatesNum);
   pinocchio::framesForwardKinematics(model, data, init_q);
-  feet_array_t<vector3_t> feet_pos;
-  for (int leg = 0; leg < feet_pos.size(); leg++)
+  feet_vector_t<vector3_t> feet_pos(info_->numThreeDofContacts);
+  for (int leg = 0; leg < info_->numThreeDofContacts; leg++)
   {
     auto FRAME_ID = info_->endEffectorFrameIndices[leg];
     int index = leg2index(leg);
     feet_pos[leg] = data.oMf[FRAME_ID].translation();
   }
+ 
   return std::move(feet_pos);
 }
 

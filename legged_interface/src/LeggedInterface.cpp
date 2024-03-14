@@ -104,6 +104,7 @@ LeggedInterface::LeggedInterface(const std::string& taskFile, const std::string&
 void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, const std::string& urdfFile,
                                                  const std::string& referenceFile, bool verbose)
 {
+
   setupModel(taskFile, urdfFile, referenceFile, verbose);
 
   initialState_.setZero(centroidalModelInfo_.stateDim);

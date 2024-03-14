@@ -69,7 +69,7 @@ void FrictionConeConstraint::setSurfaceNormalInWorld(const vector3_t& surfaceNor
 /******************************************************************************************************/
 bool FrictionConeConstraint::isActive(scalar_t time) const
 {
-  return referenceManagerPtr_->getContactFlags(time)[contactPointIndex_];
+  return referenceManagerPtr_->getContactFlags(time,info_.numThreeDofContacts)[contactPointIndex_];
 }
 
 /******************************************************************************************************/

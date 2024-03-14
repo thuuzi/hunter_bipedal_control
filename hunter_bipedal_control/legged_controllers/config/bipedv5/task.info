@@ -58,6 +58,7 @@ swing_trajectory_config
   next_stance_position_z        0.02
 
   forwardx                     -1.0
+  contactNum                    4
 }
 
 ; DDP settings

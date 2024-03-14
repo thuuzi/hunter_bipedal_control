@@ -54,7 +54,7 @@ namespace legged_robot
 /******************************************************************************************************/
 /******************************************************************************************************/
 /** Counts contact feet */
-inline size_t numberOfClosedContacts(const contact_flag_t& contactFlags)
+inline size_t numberOfClosedContacts(const contact_flag_v& contactFlags)
 {
   size_t numStanceLegs = 0;
   for (auto legInContact : contactFlags)
@@ -73,7 +73,7 @@ inline size_t numberOfClosedContacts(const contact_flag_t& contactFlags)
 /** Computes an input with zero joint velocity and forces which equally distribute the robot weight between contact
  * feet. */
 inline vector_t weightCompensatingInput(const CentroidalModelInfoTpl<scalar_t>& info,
-                                        const contact_flag_t& contactFlags)
+                                        const contact_flag_v& contactFlags)
 {
   const auto numStanceLegs = numberOfClosedContacts(contactFlags);
   vector_t input = vector_t::Zero(info.inputDim);

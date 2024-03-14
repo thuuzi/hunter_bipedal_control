@@ -104,6 +104,8 @@ public:
 
   contact_flag_t getContactFlags(scalar_t time) const;
 
+  contact_flag_v getContactFlags(scalar_t time,scalar_t cNum) const;
+
   vector_t getCmdBodyVel()
   {
     velCmdOutBuf_.updateFromBuffer();
@@ -118,6 +120,10 @@ public:
   const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner()
   {
     return swingTrajectoryPtr_;
+  }
+
+  const size_t getContactNum() const{
+    return info_.numThreeDofContacts;
   }
 
 protected:
