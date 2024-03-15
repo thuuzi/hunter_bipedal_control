@@ -114,7 +114,7 @@ inline contact_flag_v modeNumber2StanceLeg(const size_t& modeNumber,const size_t
       if(contactNum == 4)
         stanceLegs = { true, true, true, true };
       else if(contactNum == 8)
-        stanceLegs = { false, false, false, false , false, false, false, false};
+        stanceLegs = { true, true, true, true, true, true, true, true};
       break;  // 3:
   }
 

@@ -23,7 +23,8 @@ vector_t WeightedWbc::update(const vector_t& stateDesired, const vector_t& input
   // Constraints
   Task constraints = formulateConstraints();
   size_t numConstraints = constraints.b_.size() + constraints.f_.size();
-  //RowMajor行有先，qpoase输入类型
+  std::cout<<"WBC numConstraints:"<<numConstraints<<std::endl;
+  //RowMajor行优先，qpoase输入类型
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A(numConstraints, getNumDecisionVars());
   vector_t lbA(numConstraints), ubA(numConstraints);  // clang-format off
   A << constraints.a_,
@@ -60,7 +61,7 @@ vector_t WeightedWbc::update(const vector_t& stateDesired, const vector_t& input
     if (last_qpSol.size() > 0)
       qpSol = last_qpSol;
   }
-
+  std::cout<<"WBC output:"<<qpSol.transpose()<<std::endl;
   last_qpSol = qpSol;
   return qpSol; //输出求解u应该包括(广义加速度du,接触力Fc，输出力矩tau)
 }

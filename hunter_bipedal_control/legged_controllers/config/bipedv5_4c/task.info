@@ -56,7 +56,7 @@ swing_trajectory_config
 
   feet_bias_l1                  0.12
   feet_bias_l2                 -0.08
-  feet_bias_w                   -0.25
+  feet_bias_w                   -0.2
   feet_bias_h                  -0.833422
   
   next_stance_position_z        0.02
@@ -130,7 +130,7 @@ sqp
 ; Multiple_Shooting IPM settings
 ipm
 {
-  nThreads                              3
+  nThreads                              5
   dt                                    0.015
   ipmIteration                          1
   deltaTol                              1e-4
@@ -173,7 +173,7 @@ rollout
 
 mpc
 {
-  timeHorizon                     0.5  ; [s]
+  timeHorizon                     0.8  ; [s]
   solutionTimeWindow              -1   ; maximum [s]
   coldStart                       false
 
@@ -230,33 +230,33 @@ Q
   (5,5)   13.0        ; L_z / robotMass
 
   ;; Base Pose: [position, orientation] ;;
-  (6,6)   500.0    ; p_base_x
-  (7,7)   500.0    ; p_base_y
-  (8,8)   500.0    ; p_base_z
-  (9,9)   300.0    ; theta_base_z
-  (10,10) 500.0    ; theta_base_y
-  (11,11) 500.0    ; theta_base_x
+  (6,6)   50.0    ; p_base_x
+  (7,7)   50.0    ; p_base_y
+  (8,8)   50.0    ; p_base_z
+  (9,9)   30.0    ; theta_base_z
+  (10,10) 50.0    ; theta_base_y
+  (11,11) 50.0    ; theta_base_x
  
   ;; Leg Joint Positions: [L, R]
-  (12,12)  100    ; ly
-  (13,13)  10     ; lh
-  (14,14)  100     ; lkp
-  (15,15)  10     ; lk
-  (16,16)  10     ; lap
-  (17,17)  10     ; la
-  (18,18)  100     ; ry
-  (19,19)  10     ; rh
-  (20,20)  100     ; rkp
-  (21,21)  10     ; rk
-  (22,22)  100     ; rap
-  (23,23)  10     ; ra
+  (12,12)  10000    ; ly
+  (13,13)  1000     ; lh
+  (14,14)  10000     ; lkp
+  (15,15)  1000     ; lk
+  (16,16)  1000     ; lap
+  (17,17)  1000     ; la
+  (18,18)  10000     ; ry
+  (19,19)  1000     ; rh
+  (20,20)  10000     ; rkp
+  (21,21)  1000     ; rk
+  (22,22)  10000     ; rap
+  (23,23)  1000     ; ra
 }
 
 ; control weight matrix
 R
 {
   scaling 1e-3
-
+  
   ;; Front Feet Contact Forces: [L, R] ;;
   (0,0)   5.0    ; left_force
   (1,1)   5.0    ; left_force
@@ -264,28 +264,49 @@ R
   (3,3)   5.0    ; right_force
   (4,4)   5.0    ; right_force
   (5,5)   5.0    ; right_force
-  ;; Back Feet Contact Forces: [L, R]
   (6,6)   5.0    ; left_force
   (7,7)   5.0    ; left_force
   (8,8)   5.0    ; left_force
   (9,9)   5.0    ; right_force
   (10,10) 5.0    ; right_force
   (11,11) 5.0    ; right_force
-
-  ;; left foot velocity relative to base: [linear(3), angular(3)] (uses the Jacobian at nominal configuration) ;;
-  (12,12)   2000.0   ; x
-  (13,13)   2000.0   ; y
-  (14,14)   2000.0   ; z
-  (15,15)   2000.0   ; x
-  (16,16)   2000.0   ; y
-  (17,17)   2000.0   ; z
-  (18,18)   2000.0   ; x
-  (19,19)   2000.0   ; y
-  (20,20)   2000.0   ; z
-  (21,21)   2000.0   ; x
-  (22,22)   2000.0   ; y
-  (23,23)   2000.0   ; z
-    ;; left foot velocity relative to base: [linear(3), angular(3)] (uses the Jacobian at nominal configuration) ;;
+  (12,12) 5.0   ; x
+  (13,13) 5.0   ; y
+  (14,14) 5.0   ; z
+  (15,15) 5.0   ; x
+  (16,16) 5.0   ; y
+  (17,17) 5.0   ; z
+  (18,18) 5.0   ; x
+  (19,19) 5.0   ; y
+  (20,20) 5.0   ; z
+  (21,21) 5.0   ; x
+  (22,22) 5.0   ; y
+  (23,23) 5.0   ; z
+  ;; contact for joint ;;
+  (24,24) 20.0  
+  (25,25) 20.0  
+  (26,26) 20.0  
+  (27,27) 20.0  
+  (28,28) 20.0  
+  (29,29) 20.0  
+  (30,30) 20.0  
+  (31,31) 20.0  
+  (32,32) 20.0  
+  (33,33) 20.0  
+  (34,34) 20.0  
+  (35,35) 20.0  
+  (36,36) 20.0  
+  (37,37) 20.0  
+  (38,38) 20.0  
+  (39,39) 20.0  
+  (40,40) 20.0  
+  (41,41) 20.0 
+  (42,42) 20.0 
+  (43,43) 20.0 
+  (44,44) 20.0 
+  (45,45) 20.0 
+  (46,46) 20.0 
+  (47,47) 20.0  
 }
 
 frictionConeSoftConstraint

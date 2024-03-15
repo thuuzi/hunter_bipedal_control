@@ -283,12 +283,16 @@ matrix_t LeggedInterface::initializeInputCostWeight(const std::string& taskFile,
 
   matrix_t rTaskspace(totalContactDim + totalContactDim, totalContactDim + totalContactDim);
   loadData::loadEigenMatrix(taskFile, "R", rTaskspace);
+  std::cout<<"***********************************************************************************"<<std::endl;
+  std::cout<<"totalContactDim:"<<rTaskspace<<std::endl;
   matrix_t r(info.inputDim, info.inputDim);
   r.setZero();
   r.topLeftCorner(totalContactDim, totalContactDim) = rTaskspace.topLeftCorner(totalContactDim, totalContactDim);
   r.block(totalContactDim, totalContactDim, info.actuatedDofNum, info.actuatedDofNum) =
       base2feetJac.transpose() * rTaskspace.block(totalContactDim, totalContactDim, totalContactDim, totalContactDim) *
       base2feetJac;
+    std::cout<<"totalContactDim:"<<totalContactDim<<"r.size"<<r.rows()<<"rTaskspace.size"<<rTaskspace.rows()<<std::endl;
+  std::cout<<"***********************************************************************************"<<std::endl;
   return r;
 }
 

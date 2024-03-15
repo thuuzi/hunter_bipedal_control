@@ -337,7 +337,7 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   observationPublisher_.publish(ros_msg_conversions::createObservationMsg(currentObservation_));
   cpTimer_.endTimer();
   loopTimer_.endTimer();
- // std::cout<<"compute time:"<<cpTimer_.getLastIntervalInMilliseconds()<<" ms , loop total time:"<<loopTimer_.getLastIntervalInMilliseconds()<<" ms , wbc time:"<<wbcTimer_.getLastIntervalInMilliseconds()<<" ms"<<std::endl;
+ std::cout<<"compute time:"<<cpTimer_.getLastIntervalInMilliseconds()<<" ms , loop total time:"<<loopTimer_.getLastIntervalInMilliseconds()<<" ms , wbc time:"<<wbcTimer_.getLastIntervalInMilliseconds()<<" ms"<<std::endl;
 }
 
 void LeggedController::updateStateEstimation(const ros::Time& time, const ros::Duration& period)

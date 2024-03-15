@@ -196,7 +196,7 @@ Task WbcBase::formulateFrictionConeTask()
   {
     if (!contactFlag_[i])
     {
-      a.block(3 * j++, info_.generalizedCoordinatesNum + 3 * i, 3, 3) = matrix_t::Identity(3, 3);
+      a.block(3 * j++, info_.generalizedCoordinatesNum + 3 * i, 3, 3) = matrix_t::Identity(3, 3); //摆动腿接触力为0
     }
   }
   vector_t b(a.rows());
@@ -209,7 +209,7 @@ Task WbcBase::formulateFrictionConeTask()
                      0, 1, -frictionCoeff_,
                      0,-1, -frictionCoeff_;  // clang-format on
 
-  matrix_t d(5 * numContacts_ + 3 * (info_.numThreeDofContacts - numContacts_), numDecisionVars_);
+  matrix_t d(5 * numContacts_ , numDecisionVars_);
   d.setZero();
   j = 0;
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
