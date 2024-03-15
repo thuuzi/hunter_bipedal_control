@@ -1,0 +1,33 @@
+list
+{
+  [0] stance
+  [1] trot
+}
+
+stance
+ {
+   modeSequence
+   {
+     [0]     STANCE
+   }
+   switchingTimes
+   {
+     [0]     0.0
+     [1]     0.5
+   }
+}
+
+trot
+ {
+   modeSequence
+   {
+     [0]     LCONTACT
+     [1]     RCONTACT
+   }
+   switchingTimes
+   {
+     [0]     0.0
+     [1]     0.3
+     [2]     0.6
+   }
+}
